@@ -323,21 +323,43 @@
             }
 
             async save() {
-                const saveBtn = document.getElementById('saveTransactionBtn');
-                if (saveBtn) { saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; saveBtn.disabled = true; }
-
+                // Detect which app we are in to handle the button
+                const saveBtn = document.getElementById('saveTransactionBtn') || document.getElementById('saveMealBtn');
+                const defaultBtnText = document.getElementById('saveTransactionBtn') ? '<i class="fas fa-check"></i> Save Transaction' : '<i class="fas fa-check"></i> Save Log';
+                
+                if (saveBtn) { 
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; 
+                    saveBtn.disabled = true; 
+                }
+            
                 try {
                     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(this.data), this.vaultKey).toString();
-                    await fetch(BIN_URL, {
+                    const response = await fetch(BIN_URL, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY,
+                            'X-Bin-Versioning': 'false' // <-- THIS STOPS THE FREE-TIER LIMIT CRASH
+                        },
                         body: JSON.stringify({ data: encryptedData })
                     });
+                    
+                    // Explicitly check if JSONBin rejected the save
+                    if (!response.ok) {
+                        throw new Error(`Cloud rejected save (Status ${response.status}). Your Bin might be permanently locked.`);
+                    }
+                    
                     this.refreshCurrentView();
-                } catch (err) { alert("Failed to sync to cloud. Check connection."); } 
-                finally { if (saveBtn) { saveBtn.innerHTML = '<i class="fas fa-check"></i> Save Transaction'; saveBtn.disabled = false; } }
+                } catch (err) {
+                    alert("CRITICAL ERROR: Failed to sync to cloud! Your latest change was NOT saved.\n\n" + err.message);
+                    console.error(err);
+                } finally {
+                    if (saveBtn) { 
+                        saveBtn.innerHTML = defaultBtnText; 
+                        saveBtn.disabled = false; 
+                    }
+                }
             }
-
             openChangePassword() {
                 if (this.isSidebarOpen) this.toggleSidebar();
                 document.getElementById('cpCurrent').value = '';
