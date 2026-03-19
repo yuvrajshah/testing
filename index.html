@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -266,7 +267,7 @@
                 
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Decrypting...';
                 errorMsg.classList.add('hidden');
-
+            
                 try {
                     const response = await fetch(BIN_URL, { headers: { 'X-Master-Key': API_KEY } });
                     if (!response.ok) throw new Error("Cloud fetch failed.");
@@ -275,19 +276,40 @@
                     if (!result.record || Object.keys(result.record).length === 0 || !result.record.data) {
                         this.vaultKey = pwdInput; this.handleSuccessfulLogin(); return;
                     }
-
+            
+                    // 1. Decrypt the cloud data
                     const bytes = CryptoJS.AES.decrypt(result.record.data, pwdInput);
                     const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
                     if (!decryptedString) throw new Error("Incorrect Password");
-
-                    this.data = { ...this.data, ...JSON.parse(decryptedString) };
+            
+                    // 2. SMART CHECK: Is it compressed?
+                    let parsedData;
+                    if (decryptedString.startsWith('{')) {
+                        // Old format: It's raw JSON, parse it normally
+                        parsedData = JSON.parse(decryptedString);
+                    } else {
+                        // New format: It's compressed, decompress it first
+                        const decompressed = LZString.decompressFromUTF16(decryptedString);
+                        parsedData = JSON.parse(decompressed);
+                    }
+            
+                    this.data = { ...this.data, ...parsedData };
                     this.vaultKey = pwdInput; 
+                    
+                    // 3. Auto-upgrade old data: If we loaded old uncompressed data, 
+                    // silently re-save it right now so it becomes compressed in the cloud.
+                    if (decryptedString.startsWith('{')) {
+                        console.log("Upgrading cloud vault to compressed format...");
+                        this.save(); 
+                    }
+            
                     this.handleSuccessfulLogin();
-
+            
                 } catch (error) {
                     btn.innerHTML = 'Unlock Vault';
                     errorMsg.textContent = error.message.includes("Incorrect") ? "Incorrect password." : "Network/Decryption error.";
                     errorMsg.classList.remove('hidden');
+                    console.error(error);
                 }
             }
 
@@ -323,7 +345,6 @@
             }
 
             async save() {
-                // Detect which app we are in to handle the button
                 const saveBtn = document.getElementById('saveTransactionBtn') || document.getElementById('saveMealBtn');
                 const defaultBtnText = document.getElementById('saveTransactionBtn') ? '<i class="fas fa-check"></i> Save Transaction' : '<i class="fas fa-check"></i> Save Log';
                 
@@ -333,25 +354,30 @@
                 }
             
                 try {
-                    const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(this.data), this.vaultKey).toString();
+                    // 1. Convert to text
+                    const stringifiedData = JSON.stringify(this.data);
+                    
+                    // 2. COMPRESS the text to make it tiny (Shrinks size by ~85%)
+                    const compressedData = LZString.compressToUTF16(stringifiedData);
+                    
+                    // 3. Encrypt the tiny compressed text
+                    const encryptedData = CryptoJS.AES.encrypt(compressedData, this.vaultKey).toString();
+            
                     const response = await fetch(BIN_URL, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Master-Key': API_KEY,
-                            'X-Bin-Versioning': 'false' // <-- THIS STOPS THE FREE-TIER LIMIT CRASH
+                            'X-Bin-Versioning': 'false' // Keeps JSONBin from locking up
                         },
                         body: JSON.stringify({ data: encryptedData })
                     });
                     
-                    // Explicitly check if JSONBin rejected the save
-                    if (!response.ok) {
-                        throw new Error(`Cloud rejected save (Status ${response.status}). Your Bin might be permanently locked.`);
-                    }
+                    if (!response.ok) throw new Error(`Cloud rejected save (Status ${response.status})`);
                     
                     this.refreshCurrentView();
                 } catch (err) {
-                    alert("CRITICAL ERROR: Failed to sync to cloud! Your latest change was NOT saved.\n\n" + err.message);
+                    alert("Failed to sync to cloud! Check connection.\n\n" + err.message);
                     console.error(err);
                 } finally {
                     if (saveBtn) { 
