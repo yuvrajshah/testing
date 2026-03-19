@@ -609,8 +609,37 @@
                 `;
             }
 
-            /* --- MEALS LIST --- */
+           /* --- MEALS LIST --- */
             renderMeals(container) {
+                // Only build the search bar layout if it doesn't already exist
+                if (!document.getElementById('mealListBody')) {
+                    container.innerHTML = `
+                        <div class="mb-6 flex flex-col md:flex-row gap-3 bg-dark-card p-3 md:p-4 rounded-xl border border-dark-border shadow-sm">
+                            <div class="flex-1 w-full">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-500"></i>
+                                    <input type="text" placeholder="Search food logs..." class="input-dark w-full pl-10 pr-4 py-2.5 rounded-lg text-sm"
+                                    oninput="app.filterState.search = this.value; app.updateMealList()" value="${this.filterState.search}">
+                                </div>
+                            </div>
+                            <div class="flex w-full md:w-auto">
+                                <select class="input-dark rounded-lg px-3 py-2.5 text-sm w-full md:w-48" onchange="app.filterState.category = this.value; app.updateMealList()">
+                                    <option value="all">All Categories</option>
+                                    ${this.data.categories.map(c => `<option value="${c.id}" ${this.filterState.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div id="mealListBody" class="space-y-3"></div>
+                    `;
+                }
+                // Call the list updater immediately to populate the data
+                this.updateMealList();
+            }
+
+            updateMealList() {
+                const body = document.getElementById('mealListBody');
+                if (!body) return;
+
                 let list = [...this.data.meals].sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 if (this.filterState.search) {
@@ -621,28 +650,9 @@
                     list = list.filter(t => t.categories && t.categories.includes(this.filterState.category));
                 }
 
-                container.innerHTML = `
-                    <div class="mb-6 flex flex-col md:flex-row gap-3 bg-dark-card p-3 md:p-4 rounded-xl border border-dark-border shadow-sm">
-                        <div class="flex-1 w-full">
-                            <div class="relative">
-                                <i class="fas fa-search absolute left-3 top-3.5 text-gray-500"></i>
-                                <input type="text" placeholder="Search food logs..." class="input-dark w-full pl-10 pr-4 py-2.5 rounded-lg text-sm"
-                                oninput="app.filterState.search = this.value; app.refreshCurrentView()" value="${this.filterState.search}">
-                            </div>
-                        </div>
-                        <div class="flex w-full md:w-auto">
-                            <select class="input-dark rounded-lg px-3 py-2.5 text-sm w-full md:w-48" onchange="app.filterState.category = this.value; app.refreshCurrentView()">
-                                <option value="all">All Categories</option>
-                                ${this.data.categories.map(c => `<option value="${c.id}" ${this.filterState.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        ${list.length === 0 ? '<div class="text-center text-gray-500 py-12 bg-dark-card rounded-xl border border-dark-border border-dashed"><i class="fas fa-utensils text-4xl mb-3 opacity-20"></i><br>No meals found</div>' : ''}
-                        ${list.map(t => this.mealRow(t)).join('')}
-                    </div>
-                `;
+                body.innerHTML = list.length === 0 
+                    ? '<div class="text-center text-gray-500 py-12 bg-dark-card rounded-xl border border-dark-border border-dashed"><i class="fas fa-utensils text-4xl mb-3 opacity-20"></i><br>No meals found</div>' 
+                    : list.map(t => this.mealRow(t)).join('');
             }
 
             mealRow(t) {
