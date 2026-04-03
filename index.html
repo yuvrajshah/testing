@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -45,6 +46,10 @@
             .mobile-bottom-sheet { align-items: flex-end; }
             .mobile-bottom-sheet > div:not(.absolute) { width: 100%; max-height: 90vh; border-radius: 1.5rem 1.5rem 0 0; border-bottom: none; animation: slideUp 0.3s ease-out; }
         }
+
+        /* PDF Export Overrides */
+        .pdf-export-mode .no-print { display: none !important; }
+        .pdf-export-mode { background-color: #0f172a !important; padding: 20px; border-radius: 0; }
     </style>
 </head>
 
@@ -90,9 +95,12 @@
             <button onclick="app.setView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all active-nav"><i class="fas fa-chart-pie w-5"></i> Dashboard</button>
             <button onclick="app.setView('transactions')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-list w-5"></i> Transactions</button>
             <button onclick="app.setView('categories')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-tags w-5"></i> Categories</button>
+            <button onclick="app.setView('timeline')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-brand-400 bg-brand-500/5 hover:text-white hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all"><i class="fas fa-chart-line w-5"></i> Timeline Analytics</button>
+            
             <a href="healthManage.html" class="w-full flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl transition-all mt-2">
                 <i class="fas fa-heart-pulse w-5"></i> Health Manager
             </a>
+            
             <div class="pt-6 mt-4 border-t border-dark-border">
                 <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Security & Data</div>
                 <button onclick="document.getElementById('importFile').click()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-file-import w-5"></i> Import JSON</button>
@@ -241,9 +249,15 @@
                 this.data = { transactions: [], categories: [], currencyRates: { usdToInr: 90, usdToNpr: 144 } };
                 this.currentView = 'dashboard';
                 this.viewParams = {};
-                this.filterState = { search: '', dateStart: '', dateEnd: '', category: 'all', type: 'all' };
+                this.filterState = { search: '', category: 'all', type: 'all' };
                 this.vaultKey = null;
                 this.isSidebarOpen = false;
+                
+                // Timeline Analytics State
+                this.timelineChart = null;
+                this.analysisExcludedTxs = new Set();
+                this.timelineDates = { start: '', end: '' };
+
                 this.init();
             }
 
@@ -277,18 +291,14 @@
                         this.vaultKey = pwdInput; this.handleSuccessfulLogin(); return;
                     }
             
-                    // 1. Decrypt the cloud data
                     const bytes = CryptoJS.AES.decrypt(result.record.data, pwdInput);
                     const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
                     if (!decryptedString) throw new Error("Incorrect Password");
             
-                    // 2. SMART CHECK: Is it compressed?
                     let parsedData;
                     if (decryptedString.startsWith('{')) {
-                        // Old format: It's raw JSON, parse it normally
                         parsedData = JSON.parse(decryptedString);
                     } else {
-                        // New format: It's compressed, decompress it first
                         const decompressed = LZString.decompressFromUTF16(decryptedString);
                         parsedData = JSON.parse(decompressed);
                     }
@@ -296,8 +306,6 @@
                     this.data = { ...this.data, ...parsedData };
                     this.vaultKey = pwdInput; 
                     
-                    // 3. Auto-upgrade old data: If we loaded old uncompressed data, 
-                    // silently re-save it right now so it becomes compressed in the cloud.
                     if (decryptedString.startsWith('{')) {
                         console.log("Upgrading cloud vault to compressed format...");
                         this.save(); 
@@ -345,8 +353,8 @@
             }
 
             async save() {
-                const saveBtn = document.getElementById('saveTransactionBtn') || document.getElementById('saveMealBtn');
-                const defaultBtnText = document.getElementById('saveTransactionBtn') ? '<i class="fas fa-check"></i> Save Transaction' : '<i class="fas fa-check"></i> Save Log';
+                const saveBtn = document.getElementById('saveTransactionBtn');
+                const defaultBtnText = '<i class="fas fa-check"></i> Save Transaction';
                 
                 if (saveBtn) { 
                     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; 
@@ -354,13 +362,8 @@
                 }
             
                 try {
-                    // 1. Convert to text
                     const stringifiedData = JSON.stringify(this.data);
-                    
-                    // 2. COMPRESS the text to make it tiny (Shrinks size by ~85%)
                     const compressedData = LZString.compressToUTF16(stringifiedData);
-                    
-                    // 3. Encrypt the tiny compressed text
                     const encryptedData = CryptoJS.AES.encrypt(compressedData, this.vaultKey).toString();
             
                     const response = await fetch(BIN_URL, {
@@ -368,7 +371,7 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Master-Key': API_KEY,
-                            'X-Bin-Versioning': 'false' // Keeps JSONBin from locking up
+                            'X-Bin-Versioning': 'false' 
                         },
                         body: JSON.stringify({ data: encryptedData })
                     });
@@ -386,6 +389,7 @@
                     }
                 }
             }
+
             openChangePassword() {
                 if (this.isSidebarOpen) this.toggleSidebar();
                 document.getElementById('cpCurrent').value = '';
@@ -446,10 +450,10 @@
                 if (this.isSidebarOpen && window.innerWidth < 768) this.toggleSidebar();
 
                 document.querySelectorAll('.nav-item').forEach(el => {
-                    el.classList.remove('bg-white/10', 'text-white', 'shadow-sm');
+                    el.classList.remove('bg-white/10', 'text-white', 'shadow-sm', 'border-brand-500/20');
                     el.classList.add('text-gray-400');
-                    if (view !== 'yearDetails' && el.textContent.toLowerCase().includes(view)) {
-                        el.classList.add('bg-white/10', 'text-white', 'shadow-sm');
+                    if (view !== 'yearDetails' && el.textContent.toLowerCase().includes(view.replace('timeline', 'timeline analytics'))) {
+                        el.classList.add('bg-white/10', 'text-white', 'shadow-sm', 'border-brand-500/20');
                         el.classList.remove('text-gray-400');
                     }
                 });
@@ -460,13 +464,14 @@
                 else if (view === 'transactions') { document.getElementById('pageTitle').textContent = 'Transactions'; this.renderTransactions(content); } 
                 else if (view === 'categories') { document.getElementById('pageTitle').textContent = 'Categories'; this.renderCategories(content); } 
                 else if (view === 'yearDetails') { document.getElementById('pageTitle').textContent = `${params.year} Breakdown`; this.renderYearDetails(content, params.year); }
+                else if (view === 'timeline') { document.getElementById('pageTitle').textContent = 'Timeline Analytics'; this.renderTimeline(content); }
             }
 
             refreshCurrentView() { this.setView(this.currentView, this.viewParams); }
 
             /* --- DASHBOARD --- */
             renderDashboard(container) {
-                const allStats = this.calculateStats('all');
+                const allStats = this.calculateStats(this.data.transactions);
                 const years = [...new Set(this.data.transactions.map(t => new Date(t.date).getFullYear()))].sort((a, b) => b - a);
                 if (years.length === 0) years.push(new Date().getFullYear());
                 const yearsHtml = years.map(year => this.renderYearlyCard(year)).join('');
@@ -529,7 +534,8 @@
             }
 
             renderYearlyCard(year) {
-                const s = this.calculateStats(year);
+                const txs = this.data.transactions.filter(t => new Date(t.date).getFullYear() === year);
+                const s = this.calculateStats(txs);
                 const ir = this.data.currencyRates.usdToInr;
                 const nr = this.data.currencyRates.usdToNpr;
                 
@@ -586,7 +592,6 @@
 
             /* --- TRANSACTIONS --- */
             renderTransactions(container) {
-                // Only build the search bar layout if it doesn't already exist on the screen
                 if (!document.getElementById('txListBody')) {
                     container.innerHTML = `
                         <div class="mb-6 flex flex-col md:flex-row gap-3 bg-dark-card p-3 md:p-4 rounded-xl border border-dark-border shadow-sm">
@@ -612,7 +617,6 @@
                         <div id="txListBody" class="space-y-3"></div>
                     `;
                 }
-                // Call the list updater immediately to populate the data
                 this.updateTxList();
             }
 
@@ -630,10 +634,10 @@
                     : list.map(t => this.transactionRow(t)).join('');
             }
 
-            transactionRow(t) {
+            transactionRow(t, isTimelineMode = false) {
                 const isIn = t.type === 'in';
                 const dateObj = new Date(t.date);
-                const date = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const date = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const time = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
                 
                 const usdVal = isIn ? t.netAmount.usd : t.amount.usd;
@@ -645,8 +649,30 @@
                 
                 let badges = !isIn && t.categories ? t.categories.map(id => { const c = this.data.categories.find(x => x.id === id); return c ? `<span class="text-[10px] px-2 py-0.5 rounded-full border bg-dark-bg truncate max-w-[80px]" style="border-color:${c.color}40; color:${c.color}">${c.name}</span>` : ''; }).join(' ') : '';
 
+                // Handle timeline exclusion mode
+                const isExcluded = this.analysisExcludedTxs.has(t.id);
+                const rowOpacity = isExcluded ? 'opacity-40 grayscale' : 'opacity-100';
+
+                let rightSideContent = '';
+                if (isTimelineMode) {
+                    rightSideContent = `
+                        <div class="flex gap-2 ml-4 no-print items-center">
+                            <button onclick="app.toggleTimelineTx('${t.id}')" class="px-3 py-1.5 rounded-lg border ${isExcluded ? 'border-brand-500 text-brand-500 bg-brand-500/10 hover:bg-brand-500/20' : 'border-rose-500 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20'} text-xs font-medium transition-colors">
+                                ${isExcluded ? 'Include' : 'Exclude'}
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    rightSideContent = `
+                        <div class="flex gap-1.5 mt-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="app.editTransaction('${t.id}')" class="w-7 h-7 rounded-md bg-dark-bg border border-dark-border text-brand-400 hover:bg-brand-600 hover:text-white flex items-center justify-center"><i class="fas fa-pencil-alt text-xs"></i></button>
+                            <button onclick="app.deleteTransaction('${t.id}')" class="w-7 h-7 rounded-md bg-dark-bg border border-dark-border text-rose-400 hover:bg-rose-600 hover:text-white flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
+                        </div>
+                    `;
+                }
+
                 return `
-                <div class="bg-dark-card border border-dark-border rounded-xl p-4 flex items-center justify-between hover:border-brand-500/30 transition-colors group relative overflow-hidden">
+                <div class="bg-dark-card border border-dark-border rounded-xl p-4 flex items-center justify-between hover:border-brand-500/30 transition-all group relative overflow-hidden ${rowOpacity}">
                     <div class="absolute left-0 top-0 bottom-0 w-1 ${isIn ? 'bg-emerald-500' : 'bg-rose-500'} opacity-50"></div>
                     <div class="flex items-center gap-4 min-w-0 flex-1">
                         <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center ${isIn ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}"><i class="fas ${isIn ? 'fa-arrow-down' : 'fa-arrow-up'} text-lg"></i></div>
@@ -659,12 +685,179 @@
                         <div class="font-bold font-mono ${isIn ? 'text-emerald-400' : 'text-rose-400'} text-base md:text-lg">${amtUsdTxt}</div>
                         <div class="text-[10px] md:text-[11px] text-gray-500 font-mono mt-0.5">₹${this.fmt(inrVal)} • रू${this.fmt(nprVal)}</div>
                         ${sub ? `<div class="text-[10px] md:text-[11px] text-gray-500 font-mono mt-0.5">${sub}</div>` : ''}
-                        <div class="flex gap-1.5 mt-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="app.editTransaction('${t.id}')" class="w-7 h-7 rounded-md bg-dark-bg border border-dark-border text-brand-400 hover:bg-brand-600 hover:text-white flex items-center justify-center"><i class="fas fa-pencil-alt text-xs"></i></button>
-                            <button onclick="app.deleteTransaction('${t.id}')" class="w-7 h-7 rounded-md bg-dark-bg border border-dark-border text-rose-400 hover:bg-rose-600 hover:text-white flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
-                        </div>
+                        ${rightSideContent}
                     </div>
                 </div>`;
+            }
+
+            /* --- TIMELINE ANALYTICS --- */
+            renderTimeline(container) {
+                // Initialize default dates if empty (Last 30 days)
+                if (!this.timelineDates.start || !this.timelineDates.end) {
+                    const today = new Date();
+                    const offset = today.getTimezoneOffset() * 60000;
+                    const localISOTime = (new Date(today - offset)).toISOString().slice(0, -1);
+                    this.timelineDates.end = localISOTime.split('T')[0];
+                    
+                    const past = new Date(today);
+                    past.setDate(past.getDate() - 30);
+                    const pastISO = (new Date(past - offset)).toISOString().slice(0, -1);
+                    this.timelineDates.start = pastISO.split('T')[0];
+                    
+                    this.analysisExcludedTxs.clear(); // Reset exclusions on fresh open
+                }
+
+                container.innerHTML = `
+                    <div class="mb-6 flex flex-col md:flex-row gap-4 bg-dark-card p-4 rounded-xl border border-dark-border shadow-sm items-end">
+                        <div class="flex-1 w-full flex flex-col sm:flex-row gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start Date</label>
+                                <input type="date" id="tlStart" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.start}">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End Date</label>
+                                <input type="date" id="tlEnd" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.end}">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="app.generateTimeline()" class="flex-1 md:flex-none bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-brand-500/20">
+                                <i class="fas fa-sync-alt mr-2"></i> Analyze
+                            </button>
+                            <button onclick="app.exportTimelinePDF()" class="flex-1 md:flex-none bg-dark-bg border border-dark-border text-white hover:text-brand-400 hover:border-brand-500 px-5 py-2.5 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-file-pdf mr-2"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="pdfContentWrapper" class="bg-dark-bg pb-10">
+                        <div id="timelineHeader" class="hidden mb-6 border-b border-dark-border pb-4">
+                            <h2 class="text-2xl font-bold text-white">Shahi Finance Statement</h2>
+                            <p class="text-gray-400" id="timelineSubtitle"></p>
+                        </div>
+                        
+                        <div id="timelineAnalysisBody" class="space-y-6">
+                            </div>
+                    </div>
+                `;
+                
+                this.updateTimelineView();
+            }
+
+            generateTimeline() {
+                this.timelineDates.start = document.getElementById('tlStart').value;
+                this.timelineDates.end = document.getElementById('tlEnd').value;
+                this.analysisExcludedTxs.clear(); // Reset manual exclusions when changing dates
+                this.updateTimelineView();
+            }
+
+            updateTimelineView() {
+                const body = document.getElementById('timelineAnalysisBody');
+                if (!body) return;
+
+                // 1. Filter by Date
+                let rangeTxs = this.data.transactions.filter(t => {
+                    const tDate = t.date.split('T')[0];
+                    return tDate >= this.timelineDates.start && tDate <= this.timelineDates.end;
+                });
+
+                // 2. Filter out User Exclusions
+                let activeTxs = rangeTxs.filter(t => !this.analysisExcludedTxs.has(t.id));
+
+                // 3. Calculate specific stats
+                const s = this.calculateStats(activeTxs);
+                const ir = this.data.currencyRates.usdToInr;
+                const nr = this.data.currencyRates.usdToNpr;
+
+                const grossOut = Math.max(1, s.expense.usd);
+                const pProd = ((s.productive.usd / grossOut) * 100).toFixed(1);
+                const pWaste = ((s.waste.usd / grossOut) * 100).toFixed(1);
+                
+                document.getElementById('timelineSubtitle').textContent = `Period: ${this.timelineDates.start} to ${this.timelineDates.end} | Currency: USD`;
+
+                body.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-indigo-500">
+                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Spending</div>
+                            <div class="text-2xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
+                            <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd*ir)} • रू${this.fmt(s.expense.usd*nr)}</div>
+                        </div>
+                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500">
+                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Productive</div>
+                            <div class="text-2xl font-bold text-emerald-400">$${this.fmt(s.productive.usd)}</div>
+                            <div class="text-xs text-gray-500 font-mono mt-1">${pProd}% of expenses</div>
+                        </div>
+                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-rose-500">
+                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Waste / Junk</div>
+                            <div class="text-2xl font-bold text-rose-400">$${this.fmt(s.waste.usd)}</div>
+                            <div class="text-xs text-gray-500 font-mono mt-1">${pWaste}% of expenses</div>
+                        </div>
+                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl flex flex-col justify-center items-center relative min-h-[120px]">
+                            <div class="w-full h-full absolute inset-0 p-2"><canvas id="timelineChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="text-lg font-bold text-white mb-4">Transaction Ledger</h3>
+                        <div class="space-y-2">
+                            ${rangeTxs.length === 0 ? '<div class="text-gray-500 italic p-4 text-center border border-dark-border border-dashed rounded-xl">No transactions found in this date range.</div>' : ''}
+                            ${rangeTxs.map(t => this.transactionRow(t, true)).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // Draw Chart
+                if (rangeTxs.length > 0) {
+                    setTimeout(() => {
+                        const ctx = document.getElementById('timelineChart');
+                        if(!ctx) return;
+                        if (this.timelineChart) this.timelineChart.destroy();
+                        this.timelineChart = new Chart(ctx.getContext('2d'), { 
+                            type: 'doughnut', 
+                            data: { 
+                                labels: ['Productive', 'Waste', 'Dad Loan'], 
+                                datasets: [{ 
+                                    data: [s.productive.usd, s.waste.usd, s.dadUdhaar.usd], 
+                                    backgroundColor: ['#10b981', '#ef4444', '#4ade80'], 
+                                    borderWidth: 0, 
+                                    cutout: '60%' 
+                                }] 
+                            }, 
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, layout: { padding: 5 } } 
+                        });
+                    }, 50);
+                }
+            }
+
+            toggleTimelineTx(id) {
+                if (this.analysisExcludedTxs.has(id)) {
+                    this.analysisExcludedTxs.delete(id);
+                } else {
+                    this.analysisExcludedTxs.add(id);
+                }
+                this.updateTimelineView();
+            }
+
+            exportTimelinePDF() {
+                const element = document.getElementById('pdfContentWrapper');
+                const header = document.getElementById('timelineHeader');
+                
+                // Prepare for PDF
+                element.classList.add('pdf-export-mode');
+                header.classList.remove('hidden');
+
+                const opt = {
+                    margin:       0.4,
+                    filename:     `Shahi_Statement_${this.timelineDates.start}_to_${this.timelineDates.end}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                // Generate PDF and then restore UI
+                html2pdf().set(opt).from(element).save().then(() => {
+                    element.classList.remove('pdf-export-mode');
+                    header.classList.add('hidden');
+                });
             }
 
             /* --- HELPERS & REST --- */
@@ -674,7 +867,34 @@
                 return `<div class="bg-dark-card border border-dark-border rounded-xl p-4 flex flex-col justify-between hover:bg-dark-border/30 transition-colors"><div class="flex justify-between items-start mb-2"><p class="text-gray-400 text-[10px] md:text-xs font-semibold uppercase tracking-wider">${title}</p><div class="w-7 h-7 md:w-8 md:h-8 rounded-lg ${bgClass} flex items-center justify-center"><i class="fas ${icon} ${color} text-xs md:text-sm"></i></div></div><div><p class="text-lg md:text-xl font-bold text-white leading-none">$${this.fmt(val)}</p><p class="text-[10px] text-gray-500 mt-1.5 font-mono">₹${inr} • रू${npr}</p></div></div>`; 
             }
             
-            calculateStats(scope) { let txs = this.data.transactions; if (typeof scope === 'number') txs = txs.filter(t => new Date(t.date).getFullYear() === scope); const stats = { grossIn: {usd:0}, fees: {usd:0}, netIn: {usd:0}, expense: {usd:0}, productive: {usd:0}, waste: {usd:0}, dadUdhaar: {usd:0}, balance: {usd:0,inr:0,npr:0} }; txs.forEach(t => { if (t.type === 'in') { stats.grossIn.usd += t.grossAmount.usd; stats.fees.usd += t.fees.usd; stats.netIn.usd += t.netAmount.usd; } else { stats.expense.usd += t.amount.usd; if (t.categories) { if (t.categories.includes(DAD_UDHAAR_ID)) stats.dadUdhaar.usd += (t.amount.usd / t.categories.length); const split = t.amount.usd / t.categories.length; t.categories.forEach(cid => { const c = this.data.categories.find(x => x.id === cid); if (c) { if (c.type === 'productive') stats.productive.usd += split; if (c.type === 'waste') stats.waste.usd += split; } }); } else stats.waste.usd += t.amount.usd; } }); stats.balance.usd = stats.netIn.usd - stats.expense.usd; stats.balance.inr = stats.balance.usd * this.data.currencyRates.usdToInr; stats.balance.npr = stats.balance.usd * this.data.currencyRates.usdToNpr; const totOut = Math.max(1, stats.expense.usd); stats.ratios = { prod: ((stats.productive.usd/totOut)*100).toFixed(1), waste: ((stats.waste.usd/totOut)*100).toFixed(1) }; return stats; }
+            calculateStats(txsArray) { 
+                const stats = { grossIn: {usd:0}, fees: {usd:0}, netIn: {usd:0}, expense: {usd:0}, productive: {usd:0}, waste: {usd:0}, dadUdhaar: {usd:0}, balance: {usd:0,inr:0,npr:0} }; 
+                txsArray.forEach(t => { 
+                    if (t.type === 'in') { 
+                        stats.grossIn.usd += t.grossAmount.usd; stats.fees.usd += t.fees.usd; stats.netIn.usd += t.netAmount.usd; 
+                    } else { 
+                        stats.expense.usd += t.amount.usd; 
+                        if (t.categories && t.categories.length > 0) { 
+                            if (t.categories.includes(DAD_UDHAAR_ID)) stats.dadUdhaar.usd += (t.amount.usd / t.categories.length); 
+                            const split = t.amount.usd / t.categories.length; 
+                            t.categories.forEach(cid => { 
+                                const c = this.data.categories.find(x => x.id === cid); 
+                                if (c) { 
+                                    if (c.type === 'productive') stats.productive.usd += split; 
+                                    if (c.type === 'waste') stats.waste.usd += split; 
+                                } 
+                            }); 
+                        } else {
+                            stats.waste.usd += t.amount.usd; 
+                        }
+                    } 
+                }); 
+                stats.balance.usd = stats.netIn.usd - stats.expense.usd; 
+                stats.balance.inr = stats.balance.usd * this.data.currencyRates.usdToInr; 
+                stats.balance.npr = stats.balance.usd * this.data.currencyRates.usdToNpr; 
+                return stats; 
+            }
+
             openSettings() { if(this.isSidebarOpen)this.toggleSidebar(); document.getElementById('setUsdToInr').value = this.data.currencyRates.usdToInr; document.getElementById('setUsdToNpr').value = this.data.currencyRates.usdToNpr; document.getElementById('settingsModal').classList.remove('hidden'); }
             saveSettings() { const i = parseFloat(document.getElementById('setUsdToInr').value), n = parseFloat(document.getElementById('setUsdToNpr').value); if(i&&n){ this.data.currencyRates={usdToInr:i,usdToNpr:n}; this.save(); document.getElementById('settingsModal').classList.add('hidden'); } }
             openTransactionModal() { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('modalTitle').textContent="New Transaction"; document.getElementById('editId').value=""; document.getElementById('transactionForm').reset(); document.getElementById('transDate').value=new Date().toISOString().slice(0,16); document.querySelector('input[name="type"][value="out"]').click(); this.renderCategoryCheckboxes(); }
@@ -719,4 +939,3 @@
     </script>
 </body>
 </html>
-
