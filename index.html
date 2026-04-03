@@ -903,7 +903,11 @@
                                     const isIn = t.type === 'in';
                                     const dObj = new Date(t.date);
                                     const dStr = dObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-                                    const amt = isIn ? t.netAmount.usd : t.amount.usd;
+                                    
+                                    const usdVal = isIn ? t.netAmount.usd : t.amount.usd;
+                                    const inrVal = isIn ? t.netAmount.inr : t.amount.inr;
+                                    const nprVal = isIn ? t.netAmount.npr : t.amount.npr;
+                                    
                                     const color = isIn ? '#15803d' : '#b91c1c';
                                     const sign = isIn ? '+' : '-';
                                     const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
@@ -918,10 +922,13 @@
                                     
                                     return `
                                     <tr style="background-color: ${bg}; border-bottom: 1px solid #e2e8f0;">
-                                        <td style="padding: 12px 8px; color: #475569;">${dStr}</td>
-                                        <td style="padding: 12px 8px; color: #0f172a; font-weight: 500;">${t.name || (isIn ? 'Money Added' : 'General Expense')}</td>
-                                        <td style="padding: 12px 8px; color: #64748b; font-size: 11px;">${catNames}</td>
-                                        <td style="padding: 12px 8px; text-align: right; font-weight: bold; color: ${color}; font-family: monospace; font-size: 14px;">${sign}$${this.fmt(amt)}</td>
+                                        <td style="padding: 12px 8px; color: #475569; vertical-align: top;">${dStr}</td>
+                                        <td style="padding: 12px 8px; color: #0f172a; font-weight: 500; vertical-align: top;">${t.name || (isIn ? 'Money Added' : 'General Expense')}</td>
+                                        <td style="padding: 12px 8px; color: #64748b; font-size: 11px; vertical-align: top;">${catNames}</td>
+                                        <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                                            <div style="font-weight: bold; color: ${color}; font-family: monospace; font-size: 14px;">${sign}$${this.fmt(usdVal)}</div>
+                                            <div style="color: #94a3b8; font-family: monospace; font-size: 10px; margin-top: 4px;">₹${this.fmt(inrVal)} • रू${this.fmt(nprVal)}</div>
+                                        </td>
                                     </tr>
                                     `;
                                 }).join('')}
