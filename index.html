@@ -88,10 +88,11 @@
         </div>
 
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <button onclick="app.setView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all active-nav"><i class="fas fa-chart-pie w-5"></i> Dashboard</button>
-            <button onclick="app.setView('transactions')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-list w-5"></i> Transactions</button>
-            <button onclick="app.setView('categories')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-tags w-5"></i> Categories</button>
-            <button onclick="app.setView('timeline')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-brand-400 bg-brand-500/5 hover:text-white hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all"><i class="fas fa-chart-line w-5"></i> Timeline Analytics</button>
+            <button data-view="dashboard" onclick="app.setView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all active-nav"><i class="fas fa-chart-pie w-5"></i> Dashboard</button>
+            <button data-view="transactions" onclick="app.setView('transactions')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-list w-5"></i> Transactions</button>
+            <button data-view="categories" onclick="app.setView('categories')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-tags w-5"></i> Categories</button>
+            <button data-view="bulkCategorize" onclick="app.setView('bulkCategorize')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-layer-group w-5"></i> Bulk Categorize</button>
+            <button data-view="timeline" onclick="app.setView('timeline')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-brand-400 bg-brand-500/5 hover:text-white hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all"><i class="fas fa-chart-line w-5"></i> Timeline Analytics</button>
             
             <a href="healthManage.html" class="w-full flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl transition-all mt-2">
                 <i class="fas fa-heart-pulse w-5"></i> Health Manager
@@ -234,6 +235,8 @@
         </div>
     </div>
 
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 items-end pointer-events-none"></div>
+
     <script>
         const DAD_UDHAAR_ID = "cat_1762946534522";
         const BIN_ID = "69a163dd43b1c97be9a30026";
@@ -254,6 +257,11 @@
                 this.analysisExcludedTxs = new Set();
                 this.timelineDates = { start: '', end: '' };
                 this.timelineSort = 'date-desc';
+                this.timelineCategory = 'all';
+
+                // Bulk Categorize State
+                this.bulkFilterState = { search: '', category: 'all' };
+                this.bulkSelectedTxs = new Set();
 
                 this.init();
             }
@@ -376,9 +384,11 @@
                     if (!response.ok) throw new Error(`Cloud rejected save (Status ${response.status})`);
                     
                     this.refreshCurrentView();
+                    return true;
                 } catch (err) {
                     alert("Failed to sync to cloud! Check connection.\n\n" + err.message);
                     console.error(err);
+                    return false;
                 } finally {
                     if (saveBtn) { 
                         saveBtn.innerHTML = defaultBtnText; 
@@ -449,7 +459,7 @@
                 document.querySelectorAll('.nav-item').forEach(el => {
                     el.classList.remove('bg-white/10', 'text-white', 'shadow-sm', 'border-brand-500/20');
                     el.classList.add('text-gray-400');
-                    if (view !== 'yearDetails' && el.textContent.toLowerCase().includes(view.replace('timeline', 'timeline analytics'))) {
+                    if (el.dataset.view === view) {
                         el.classList.add('bg-white/10', 'text-white', 'shadow-sm', 'border-brand-500/20');
                         el.classList.remove('text-gray-400');
                     }
@@ -462,6 +472,7 @@
                 else if (view === 'categories') { document.getElementById('pageTitle').textContent = 'Categories'; this.renderCategories(content); } 
                 else if (view === 'yearDetails') { document.getElementById('pageTitle').textContent = `${params.year} Breakdown`; this.renderYearDetails(content, params.year); }
                 else if (view === 'timeline') { document.getElementById('pageTitle').textContent = 'Timeline Analytics'; this.renderTimeline(content); }
+                else if (view === 'bulkCategorize') { document.getElementById('pageTitle').textContent = 'Bulk Categorize'; this.renderBulkCategorize(content); }
             }
 
             refreshCurrentView() { this.setView(this.currentView, this.viewParams); }
@@ -609,6 +620,9 @@
                                     <option value="all">Categories</option>
                                     ${this.data.categories.map(c => `<option value="${c.id}" ${this.filterState.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
                                 </select>
+                                <button onclick="app.setView('bulkCategorize')" title="Change the category on many transactions at once" class="flex items-center gap-2 bg-dark-bg border border-dark-border text-gray-300 hover:text-white hover:border-brand-500 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
+                                    <i class="fas fa-layer-group text-brand-400"></i><span class="hidden lg:inline">Bulk Categorize</span>
+                                </button>
                             </div>
                         </div>
                         <div id="txListBody" class="space-y-3"></div>
@@ -686,6 +700,138 @@
                 </div>`;
             }
 
+            /* --- BULK CATEGORIZE --- */
+            renderBulkCategorize(container) {
+                if (!document.getElementById('bulkTxListBody')) {
+                    this.bulkSelectedTxs.clear();
+                    container.innerHTML = `
+                        <div class="mb-4 bg-brand-500/5 border border-brand-500/20 rounded-xl p-4 text-sm text-brand-300 flex items-start gap-3">
+                            <i class="fas fa-circle-info mt-0.5"></i>
+                            <div>Select the transactions below, choose the category you want to apply, then hit <span class="font-semibold text-white">Apply Change</span>. Handy for fixing categories on a whole batch of old transactions at once.</div>
+                        </div>
+                        <div class="mb-4 flex flex-col md:flex-row gap-3 bg-dark-card p-3 md:p-4 rounded-xl border border-dark-border shadow-sm">
+                            <div class="flex-1 w-full">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-500"></i>
+                                    <input type="text" placeholder="Search transactions..." class="input-dark w-full pl-10 pr-4 py-2.5 rounded-lg text-sm" 
+                                    oninput="app.bulkFilterState.search = this.value; app.updateBulkList()" value="${this.bulkFilterState.search}">
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select class="input-dark rounded-lg px-3 py-2.5 text-sm flex-1 md:w-48" onchange="app.bulkFilterState.category = this.value; app.updateBulkList()">
+                                    <option value="all">Current Category: All</option>
+                                    ${this.data.categories.map(c => `<option value="${c.id}" ${this.bulkFilterState.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                                <button onclick="app.bulkSelectAll(true)" class="px-3 py-2.5 rounded-lg border border-dark-border text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">Select All</button>
+                                <button onclick="app.bulkSelectAll(false)" class="px-3 py-2.5 rounded-lg border border-dark-border text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">Clear</button>
+                            </div>
+                        </div>
+
+                        <div id="bulkTxListBody" class="space-y-2 mb-32 md:mb-6"></div>
+
+                        <div class="fixed md:sticky bottom-0 left-0 right-0 md:bottom-auto z-20 md:z-auto md:mt-4">
+                            <div class="bg-dark-card border-t md:border border-dark-border md:rounded-xl p-4 shadow-2xl flex flex-col sm:flex-row gap-3 sm:items-center">
+                                <div class="text-sm text-gray-300 font-medium whitespace-nowrap"><span id="bulkSelectedCount" class="text-brand-400 font-bold">0</span> selected</div>
+                                <select id="bulkCategorySelect" class="input-dark rounded-lg px-3 py-2.5 text-sm flex-1">
+                                    <option value="">Change category to...</option>
+                                    ${this.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                </select>
+                                <label class="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap cursor-pointer select-none">
+                                    <input type="checkbox" id="bulkAddMode" class="form-checkbox rounded bg-dark-bg border-gray-600 w-3.5 h-3.5 text-brand-500"> Add instead of replace
+                                </label>
+                                <button onclick="app.applyBulkCategoryChange()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors whitespace-nowrap">
+                                    <i class="fas fa-check mr-2"></i>Apply Change
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                this.updateBulkList();
+            }
+
+            getBulkFilteredList() {
+                let list = this.data.transactions.filter(t => t.type === 'out');
+                if (this.bulkFilterState.search) list = list.filter(t => (t.name || t.description || '').toLowerCase().includes(this.bulkFilterState.search.toLowerCase()));
+                if (this.bulkFilterState.category !== 'all') list = list.filter(t => t.categories && t.categories.includes(this.bulkFilterState.category));
+                return list.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            updateBulkList() {
+                const body = document.getElementById('bulkTxListBody');
+                if (!body) return;
+                const list = this.getBulkFilteredList();
+
+                body.innerHTML = list.length === 0
+                    ? '<div class="text-center text-gray-500 py-12 bg-dark-card rounded-xl border border-dark-border border-dashed"><i class="fas fa-receipt text-4xl mb-3 opacity-20"></i><br>No expense transactions found</div>'
+                    : list.map(t => this.bulkRow(t)).join('');
+                this.updateBulkCount();
+            }
+
+            bulkRow(t) {
+                const dateObj = new Date(t.date);
+                const date = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const badges = (t.categories && t.categories.length > 0) ? t.categories.map(id => { const c = this.data.categories.find(x => x.id === id); return c ? `<span class="text-[10px] px-2 py-0.5 rounded-full border bg-dark-bg truncate max-w-[100px]" style="border-color:${c.color}40; color:${c.color}">${c.name}</span>` : ''; }).join(' ') : '<span class="text-[10px] px-2 py-0.5 rounded-full border border-dark-border text-gray-500">Uncategorized</span>';
+                const checked = this.bulkSelectedTxs.has(t.id) ? 'checked' : '';
+                const highlight = this.bulkSelectedTxs.has(t.id) ? 'border-brand-500/50 bg-brand-500/5' : 'border-dark-border';
+
+                return `
+                <label class="bulk-row bg-dark-card border ${highlight} rounded-xl p-4 flex items-center gap-4 hover:border-brand-500/30 transition-colors cursor-pointer">
+                    <input type="checkbox" ${checked} onchange="app.toggleBulkSelect('${t.id}', this.checked, this)" class="form-checkbox w-5 h-5 rounded bg-dark-bg border-gray-600 text-brand-500 flex-shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-white truncate text-sm md:text-base">${t.name || 'General Expense'}</div>
+                        <div class="text-xs text-gray-400 mt-1 flex items-center gap-2 flex-wrap"><span>${date}</span> ${badges}</div>
+                    </div>
+                    <div class="font-bold font-mono text-rose-400 text-sm md:text-base flex-shrink-0">-$${this.fmt(t.amount.usd)}</div>
+                </label>`;
+            }
+
+            toggleBulkSelect(id, checked, el) {
+                if (checked) this.bulkSelectedTxs.add(id); else this.bulkSelectedTxs.delete(id);
+                const label = el && el.closest('.bulk-row');
+                if (label) {
+                    label.classList.toggle('border-brand-500/50', checked);
+                    label.classList.toggle('bg-brand-500/5', checked);
+                    label.classList.toggle('border-dark-border', !checked);
+                }
+                this.updateBulkCount();
+            }
+
+            updateBulkCount() {
+                const el = document.getElementById('bulkSelectedCount');
+                if (el) el.textContent = this.bulkSelectedTxs.size;
+            }
+
+            bulkSelectAll(select) {
+                if (select) this.getBulkFilteredList().forEach(t => this.bulkSelectedTxs.add(t.id));
+                else this.bulkSelectedTxs.clear();
+                this.updateBulkList();
+            }
+
+            async applyBulkCategoryChange() {
+                const select = document.getElementById('bulkCategorySelect');
+                const catId = select.value;
+                if (!catId) { this.showToast('Please choose a category first.', 'error'); return; }
+                if (this.bulkSelectedTxs.size === 0) { this.showToast('No transactions selected.', 'error'); return; }
+
+                const mode = document.getElementById('bulkAddMode').checked ? 'add' : 'replace';
+                const cat = this.data.categories.find(c => c.id === catId);
+                const count = this.bulkSelectedTxs.size;
+                const verb = mode === 'add' ? `add the category "${cat ? cat.name : ''}" to` : `change the category of`;
+
+                if (!confirm(`This will ${verb} ${count} transaction(s)${mode === 'replace' ? ` to "${cat ? cat.name : ''}"` : ''}. This updates your cloud vault and cannot be undone. Continue?`)) return;
+
+                this.data.transactions.forEach(t => {
+                    if (this.bulkSelectedTxs.has(t.id)) {
+                        if (mode === 'add') t.categories = Array.from(new Set([...(t.categories || []), catId]));
+                        else t.categories = [catId];
+                    }
+                });
+
+                this.bulkSelectedTxs.clear();
+                const ok = await this.save();
+                if (ok) this.showToast(`Updated ${count} transaction(s) to "${cat ? cat.name : ''}".`);
+            }
+
             /* --- TIMELINE ANALYTICS --- */
             renderTimeline(container) {
                 if (!this.timelineDates.start || !this.timelineDates.end) {
@@ -703,16 +849,23 @@
 
                 container.innerHTML = `
                     <div class="mb-6 flex flex-col md:flex-row gap-4 bg-dark-card p-4 rounded-xl border border-dark-border shadow-sm items-end">
-                        <div class="flex-1 w-full flex flex-col sm:flex-row gap-4">
-                            <div class="flex-1">
+                        <div class="flex-1 w-full grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start Date</label>
                                 <input type="date" id="tlStart" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.start}">
                             </div>
-                            <div class="flex-1">
+                            <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End Date</label>
                                 <input type="date" id="tlEnd" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.end}">
                             </div>
-                            <div class="flex-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
+                                <select id="tlCategory" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" onchange="app.timelineCategory = this.value; app.updateTimelineView()">
+                                    <option value="all">All Categories</option>
+                                    ${this.data.categories.map(c => `<option value="${c.id}" ${this.timelineCategory === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sort By</label>
                                 <select id="tlSort" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" onchange="app.timelineSort = this.value; app.updateTimelineView()">
                                     <option value="date-desc" ${this.timelineSort === 'date-desc' ? 'selected' : ''}>Date (Newest First)</option>
@@ -753,6 +906,10 @@
                     const tDate = t.date.split('T')[0];
                     return tDate >= this.timelineDates.start && tDate <= this.timelineDates.end;
                 });
+
+                if (this.timelineCategory !== 'all') {
+                    rangeTxs = rangeTxs.filter(t => t.categories && t.categories.includes(this.timelineCategory));
+                }
 
                 const sortMode = this.timelineSort || 'date-desc';
                 const getAmt = (t) => t.type === 'in' ? t.netAmount.usd : t.amount.usd;
@@ -840,6 +997,10 @@
                     const tDate = t.date.split('T')[0];
                     return tDate >= this.timelineDates.start && tDate <= this.timelineDates.end;
                 });
+
+                if (this.timelineCategory !== 'all') {
+                    rangeTxs = rangeTxs.filter(t => t.categories && t.categories.includes(this.timelineCategory));
+                }
                 
                 let activeTxs = rangeTxs.filter(t => !this.analysisExcludedTxs.has(t.id));
                 
@@ -869,6 +1030,7 @@
                             <div style="text-align: right;">
                                 <p style="margin: 0; color: #0f172a; font-weight: bold; font-size: 14px;">Period</p>
                                 <p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">${this.timelineDates.start} to ${this.timelineDates.end}</p>
+                                ${this.timelineCategory !== 'all' ? `<p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">Category: ${(this.data.categories.find(c => c.id === this.timelineCategory) || {}).name || ''}</p>` : ''}
                             </div>
                         </div>
                         
@@ -945,9 +1107,10 @@
                 pdfContainer.style.left = '-9999px';
                 document.body.appendChild(pdfContainer);
 
+                const catSuffix = this.timelineCategory !== 'all' ? `_${((this.data.categories.find(c => c.id === this.timelineCategory) || {}).name || '').replace(/[^a-z0-9]+/gi, '_')}` : '';
                 const opt = {
                     margin:       [0.4, 0.4, 0.4, 0.4], 
-                    filename:     `Shahi_Statement_${this.timelineDates.start}_to_${this.timelineDates.end}.pdf`,
+                    filename:     `Shahi_Statement_${this.timelineDates.start}_to_${this.timelineDates.end}${catSuffix}.pdf`,
                     image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true },
                     jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
@@ -1001,6 +1164,17 @@
             updateLiveFee() { const g=parseFloat(document.getElementById('grossAmount').value)||0, n=parseFloat(document.getElementById('netAmount').value)||0, gc=document.getElementById('grossCurrency').value, nc=document.getElementById('netCurrency').value; const fee = Math.max(0, this.convert(g,gc,'usd') - this.convert(n,nc,'usd')); document.getElementById('liveFeeCalc').textContent = `${this.fmt(fee)} USD`; }
             convert(amt,from,to) { if(from==='usd')return amt; if(from==='inr')return amt/this.data.currencyRates.usdToInr; if(from==='npr')return amt/this.data.currencyRates.usdToNpr; return amt; }
             fmt(n) { return n?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00'; }
+            showToast(message, type = 'success') {
+                const container = document.getElementById('toastContainer');
+                if (!container) { alert(message); return; }
+                const styles = { success: 'border-emerald-500/40 text-emerald-400', error: 'border-rose-500/40 text-rose-400' };
+                const el = document.createElement('div');
+                el.className = `pointer-events-auto glass-panel border ${styles[type] || styles.success} px-4 py-3 rounded-xl shadow-2xl text-sm font-medium flex items-center gap-2 max-w-xs transition-all duration-300 opacity-0 translate-y-2`;
+                el.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i><span>${message}</span>`;
+                container.appendChild(el);
+                requestAnimationFrame(() => { el.classList.remove('opacity-0', 'translate-y-2'); });
+                setTimeout(() => { el.classList.add('opacity-0'); setTimeout(() => el.remove(), 300); }, 3500);
+            }
             renderCategoryCheckboxes() { document.getElementById('categoryCheckboxes').innerHTML = this.data.categories.map(c => `<label class="flex items-center space-x-2 cursor-pointer hover:bg-white/5 p-2 rounded-lg border border-transparent hover:border-dark-border transition-colors"><input type="checkbox" name="cats" value="${c.id}" class="form-checkbox text-brand-500 rounded bg-dark-bg border-gray-600 w-4 h-4"><span class="text-sm font-medium" style="color:${c.color}">${c.name}</span></label>`).join(''); }
             handleTransactionSubmit(e) { e.preventDefault(); const id=document.getElementById('editId').value, type=document.querySelector('input[name="type"]:checked').value, date=document.getElementById('transDate').value, desc=document.getElementById('description').value; let t={id:id||'trans_'+Date.now(),type,date,description:desc}; if(type==='in'){ const g=parseFloat(document.getElementById('grossAmount').value)||0, n=parseFloat(document.getElementById('netAmount').value)||0; const gu=this.convert(g,document.getElementById('grossCurrency').value,'usd'), nu=this.convert(n,document.getElementById('netCurrency').value,'usd'); t.grossAmount=this.makeAmt(gu); t.netAmount=this.makeAmt(nu); t.fees=this.makeAmt(Math.max(0,gu-nu)); } else { const nm=document.getElementById('expenseName').value, val=parseFloat(document.getElementById('expenseAmount').value)||0, cats=Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(cb=>cb.value); t.name=nm; t.amount=this.makeAmt(this.convert(val,document.getElementById('expenseCurrency').value,'usd')); t.categories=cats; } if(id){ const i=this.data.transactions.findIndex(x=>x.id===id); if(i!==-1)this.data.transactions[i]=t; } else this.data.transactions.push(t); this.save(); this.closeModal('transactionModal'); }
             editTransaction(id) { const t=this.data.transactions.find(x=>x.id===id); if(!t)return; this.openTransactionModal(); document.getElementById('modalTitle').textContent="Edit Transaction"; document.getElementById('editId').value=t.id; document.getElementById('transDate').value=new Date(t.date).toISOString().slice(0,16); document.getElementById('description').value=t.description||''; document.querySelector(`input[name="type"][value="${t.type}"]`).click(); if(t.type==='in'){ document.getElementById('grossAmount').value=t.grossAmount.usd; document.getElementById('grossCurrency').value='usd'; document.getElementById('netAmount').value=t.netAmount.usd; document.getElementById('netCurrency').value='usd'; } else { document.getElementById('expenseName').value=t.name; document.getElementById('expenseAmount').value=t.amount.usd; document.getElementById('expenseCurrency').value='usd'; setTimeout(()=>{t.categories.forEach(c=>{const cb=document.querySelector(`input[name="cats"][value="${c}"]`); if(cb)cb.checked=true;})},50); } }
