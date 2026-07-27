@@ -57,8 +57,9 @@
                 <i class="fas fa-lock text-brand-500 text-2xl"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Shahi Finance</h2>
-            <p class="text-gray-400 text-sm mb-6">Enter your master key to decrypt your vault.</p>
+            <p id="lockSubtitle" class="text-gray-400 text-sm mb-6">Enter your master key to decrypt your vault.</p>
             
+            <!-- Standard Login Form -->
             <form id="loginForm" class="space-y-4">
                 <div class="relative">
                     <i class="fas fa-key absolute left-4 top-3.5 text-gray-500"></i>
@@ -73,6 +74,48 @@
                 </button>
                 <p id="loginError" class="text-rose-500 text-sm hidden mt-2 bg-rose-500/10 py-2 rounded">Incorrect password or network error.</p>
             </form>
+
+            <!-- Setup Form (Shows only if ENCRYPTED_GH_CONFIG is empty) -->
+            <form id="setupForm" class="space-y-4 hidden" onsubmit="app.generateEncryptedConfig(event)">
+                <div class="bg-brand-500/10 border border-brand-500/30 p-3 rounded-xl text-xs text-brand-300 mb-4 text-left">
+                    <i class="fas fa-info-circle mr-1"></i> Paste your new GitHub token and repo details here. We will encrypt it so you can add it to your HTML file.
+                </div>
+                <div>
+                    <input type="password" id="setupPwd" class="input-dark w-full rounded-xl px-4 py-3" placeholder="Create Master Password" required>
+                </div>
+                <div>
+                    <input type="password" id="setupToken" class="input-dark w-full rounded-xl px-4 py-3" placeholder="GitHub Token (ghp_...)" required>
+                </div>
+                <div>
+                    <input type="text" id="setupRepo" class="input-dark w-full rounded-xl px-4 py-3" placeholder="username/repository" required>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-medium transition-all">
+                    Generate Config
+                </button>
+            </form>
+
+            <!-- Setup Output Textarea -->
+            <div id="setupOutput" class="hidden mt-6 text-left">
+                <p class="text-sm text-white font-bold mb-2">1. Copy this encrypted string:</p>
+                <textarea id="setupOutputText" class="w-full text-xs font-mono p-3 bg-black text-emerald-400 rounded-xl border border-dark-border mb-4 focus:outline-none" rows="4" readonly></textarea>
+                <p class="text-xs text-gray-400">2. Paste it between the quotes of the <code class="text-brand-400 bg-black px-1 rounded">ENCRYPTED_GH_CONFIG</code> variable inside the `<script>` tag of your index.html file, then push it to GitHub.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required Manual HTML Update Modal (For Password Changes) -->
+    <div id="htmlUpdateModal" class="fixed inset-0 z-[110] hidden flex justify-center items-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+        <div class="relative w-full max-w-lg bg-dark-card border border-rose-500/50 rounded-2xl shadow-2xl p-6 md:p-8">
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2 text-rose-400"><i class="fas fa-exclamation-triangle"></i> Mandatory Code Update</h3>
+            <p class="text-gray-300 text-sm mb-4">You successfully changed your password. Because your GitHub token is encrypted using your password, we had to re-encrypt it.</p>
+            <p class="text-white font-bold text-sm mb-2">You MUST copy the string below and update the ENCRYPTED_GH_CONFIG variable in your index.html file immediately, otherwise you will be locked out upon refresh.</p>
+            
+            <textarea id="htmlUpdateText" class="w-full text-xs font-mono p-3 bg-black text-rose-400 rounded-xl border border-rose-500/30 mb-4 focus:outline-none" rows="5" readonly></textarea>
+            
+            <button onclick="app.closeModal('htmlUpdateModal')" class="w-full bg-dark-bg border border-dark-border text-white py-3 rounded-xl font-medium hover:bg-white/5">
+                I have updated my HTML file
+            </button>
         </div>
     </div>
 
@@ -221,7 +264,7 @@
         <div class="relative w-full max-w-md bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl p-6 md:p-8">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto mt-0 mb-5 md:hidden"></div>
             <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2"><i class="fas fa-shield-alt text-brand-500"></i> Change Master Key</h3>
-            <p class="text-gray-400 text-sm mb-6">This will re-encrypt your entire cloud vault.</p>
+            <p class="text-gray-400 text-sm mb-6">This will re-encrypt your entire cloud vault AND your GitHub config.</p>
             <form onsubmit="app.submitChangePassword(event)" class="space-y-4">
                 <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Current Password</label><input type="password" id="cpCurrent" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest" required></div>
                 <div><label class="block text-sm font-medium text-gray-400 mb-1.5">New Password</label><input type="password" id="cpNew" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest" required minlength="4"></div>
@@ -238,28 +281,31 @@
     <div id="toastContainer" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 items-end pointer-events-none"></div>
 
     <script>
+        /* =========================================================================
+           🔐 PASTE YOUR ENCRYPTED GITHUB CONFIG HERE AFTER SETUP
+           ========================================================================= */
+        const ENCRYPTED_GH_CONFIG = "";
+
+
         const DAD_UDHAAR_ID = "cat_1762946534522";
-        const BIN_ID = "69a163dd43b1c97be9a30026";
-        const API_KEY = "$2a$10$d3j4cE6hPJ6QJ19dGBO3weaZllK12qHJ.fKbRhm6RRZHiewtvbzm6";
-        const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
         class FinanceApp {
             constructor() {
                 this.data = { transactions: [], categories: [], currencyRates: { usdToInr: 90, usdToNpr: 144 } };
+                this.gh = { token: '', repo: '', path: '', sha: null };
+                
                 this.currentView = 'dashboard';
                 this.viewParams = {};
                 this.filterState = { search: '', category: 'all', type: 'all' };
                 this.vaultKey = null;
                 this.isSidebarOpen = false;
                 
-                // Timeline Analytics State
                 this.timelineChart = null;
                 this.analysisExcludedTxs = new Set();
                 this.timelineDates = { start: '', end: '' };
                 this.timelineSort = 'date-desc';
                 this.timelineCategory = 'all';
 
-                // Bulk Categorize State
                 this.bulkFilterState = { search: '', category: 'all' };
                 this.bulkSelectedTxs = new Set();
 
@@ -267,51 +313,104 @@
             }
 
             init() {
-                document.getElementById('loginForm').addEventListener('submit', (e) => this.login(e));
-                document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
-
-                const savedKey = localStorage.getItem('shahi_vault_key');
-                if (savedKey) {
-                    document.getElementById('vaultPassword').value = savedKey;
-                    document.getElementById('rememberMe').checked = true;
-                    this.login(new Event('submit'));
+                // Boot Router: Decide whether to show Setup or Login
+                if (!ENCRYPTED_GH_CONFIG) {
+                    document.getElementById('loginForm').classList.add('hidden');
+                    document.getElementById('setupForm').classList.remove('hidden');
+                    document.getElementById('lockSubtitle').textContent = 'Configure your secure GitHub Bridge to begin.';
+                } else {
+                    document.getElementById('loginForm').addEventListener('submit', (e) => this.login(e));
+                    
+                    const savedKey = localStorage.getItem('shahi_vault_key');
+                    if (savedKey) {
+                        document.getElementById('vaultPassword').value = savedKey;
+                        document.getElementById('rememberMe').checked = true;
+                        this.login(new Event('submit'));
+                    }
                 }
+
+                document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
             }
 
+            /* --- GITHUB SETUP & ENCRYPTION --- */
+            generateEncryptedConfig(e) {
+                e.preventDefault();
+                const pwd = document.getElementById('setupPwd').value;
+                const token = document.getElementById('setupToken').value.trim();
+                const repo = document.getElementById('setupRepo').value.trim();
+                
+                const configObj = { token: token, repo: repo, path: 'vault.json', sha: null };
+                
+                // Encrypt the JSON object using AES and the master password
+                const encryptedString = CryptoJS.AES.encrypt(JSON.stringify(configObj), pwd).toString();
+                
+                document.getElementById('setupForm').classList.add('hidden');
+                document.getElementById('setupOutput').classList.remove('hidden');
+                document.getElementById('setupOutputText').value = encryptedString;
+            }
+
+            /* --- AUTH & FETCH --- */
             async login(e) {
                 if (e) e.preventDefault();
                 const pwdInput = document.getElementById('vaultPassword').value;
                 const btn = document.getElementById('loginBtn');
                 const errorMsg = document.getElementById('loginError');
                 
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Decrypting...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlocking...';
                 errorMsg.classList.add('hidden');
             
                 try {
-                    const response = await fetch(BIN_URL, { headers: { 'X-Master-Key': API_KEY } });
-                    if (!response.ok) throw new Error("Cloud fetch failed.");
-                    const result = await response.json();
+                    // 1. Decrypt GitHub Configuration from the hardcoded string
+                    const configBytes = CryptoJS.AES.decrypt(ENCRYPTED_GH_CONFIG, pwdInput);
+                    const configStr = configBytes.toString(CryptoJS.enc.Utf8);
                     
-                    if (!result.record || Object.keys(result.record).length === 0 || !result.record.data) {
-                        this.vaultKey = pwdInput; this.handleSuccessfulLogin(); return;
+                    if (!configStr) throw new Error("Incorrect Password");
+                    this.gh = JSON.parse(configStr);
+
+                    // 2. Fetch Vault from GitHub
+                    const url = `https://api.github.com/repos/${this.gh.repo}/contents/${this.gh.path}`;
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${this.gh.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    // 3. Handle entirely empty/new vault
+                    if (response.status === 404) {
+                        this.gh.sha = null;
+                        this.vaultKey = pwdInput; 
+                        this.handleSuccessfulLogin(); 
+                        return;
                     }
+                    
+                    if (!response.ok) throw new Error("GitHub sync failed. Ensure your token hasn't expired.");
+                    
+                    const result = await response.json();
+                    this.gh.sha = result.sha; 
+                    
+                    // GitHub base64 contains newlines which breaks JS atob()
+                    const base64Content = result.content.replace(/\n/g, '');
+                    const encryptedVaultString = atob(base64Content);
             
-                    const bytes = CryptoJS.AES.decrypt(result.record.data, pwdInput);
-                    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-                    if (!decryptedString) throw new Error("Incorrect Password");
+                    // 4. Decrypt Vault Data
+                    const vaultBytes = CryptoJS.AES.decrypt(encryptedVaultString, pwdInput);
+                    const decryptedVault = vaultBytes.toString(CryptoJS.enc.Utf8);
+                    
+                    if (!decryptedVault) throw new Error("Vault decryption failed. Data might be corrupted.");
             
                     let parsedData;
-                    if (decryptedString.startsWith('{')) {
-                        parsedData = JSON.parse(decryptedString);
+                    if (decryptedVault.startsWith('{')) {
+                        parsedData = JSON.parse(decryptedVault);
                     } else {
-                        const decompressed = LZString.decompressFromUTF16(decryptedString);
+                        const decompressed = LZString.decompressFromUTF16(decryptedVault);
                         parsedData = JSON.parse(decompressed);
                     }
             
                     this.data = { ...this.data, ...parsedData };
                     this.vaultKey = pwdInput; 
                     
-                    if (decryptedString.startsWith('{')) {
+                    if (decryptedVault.startsWith('{')) {
                         console.log("Upgrading cloud vault to compressed format...");
                         this.save(); 
                     }
@@ -320,7 +419,7 @@
             
                 } catch (error) {
                     btn.innerHTML = 'Unlock Vault';
-                    errorMsg.textContent = error.message.includes("Incorrect") ? "Incorrect password." : "Network/Decryption error.";
+                    errorMsg.textContent = error.message;
                     errorMsg.classList.remove('hidden');
                     console.error(error);
                 }
@@ -357,6 +456,7 @@
                 if (this.isSidebarOpen) this.toggleSidebar();
             }
 
+            /* --- GITHUB SAVE ENGINE --- */
             async save() {
                 const saveBtn = document.getElementById('saveTransactionBtn');
                 const defaultBtnText = '<i class="fas fa-check"></i> Save Transaction';
@@ -370,23 +470,39 @@
                     const stringifiedData = JSON.stringify(this.data);
                     const compressedData = LZString.compressToUTF16(stringifiedData);
                     const encryptedData = CryptoJS.AES.encrypt(compressedData, this.vaultKey).toString();
-            
-                    const response = await fetch(BIN_URL, {
+                    
+                    const base64Content = btoa(encryptedData);
+                    
+                    const url = `https://api.github.com/repos/${this.gh.repo}/contents/${this.gh.path}`;
+                    const bodyParams = {
+                        message: `Vault Auto-Sync: ${new Date().toLocaleString()}`,
+                        content: base64Content
+                    };
+                    
+                    if (this.gh.sha) { bodyParams.sha = this.gh.sha; }
+
+                    const response = await fetch(url, {
                         method: 'PUT',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': API_KEY,
-                            'X-Bin-Versioning': 'false' 
+                            'Authorization': `Bearer ${this.gh.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ data: encryptedData })
+                        body: JSON.stringify(bodyParams)
                     });
                     
-                    if (!response.ok) throw new Error(`Cloud rejected save (Status ${response.status})`);
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.message || `GitHub rejected save (Status ${response.status})`);
+                    }
+                    
+                    const result = await response.json();
+                    this.gh.sha = result.content.sha; // Update local SHA hash
                     
                     this.refreshCurrentView();
                     return true;
                 } catch (err) {
-                    alert("Failed to sync to cloud! Check connection.\n\n" + err.message);
+                    alert("Failed to sync to GitHub!\n\n" + err.message);
                     console.error(err);
                     return false;
                 } finally {
@@ -421,15 +537,23 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting...';
                 btn.disabled = true;
 
+                // 1. Update Vault Key & Re-save Vault to GitHub
                 this.vaultKey = newPw; 
                 if (localStorage.getItem('shahi_vault_key')) localStorage.setItem('shahi_vault_key', newPw);
-
                 await this.save(); 
+
+                // 2. Generate a new encrypted GitHub Config string
+                // We zero out the sha here so if they deploy, it forces a fetch properly.
+                const freshConfig = { ...this.gh, sha: null };
+                const newEncryptedConfig = CryptoJS.AES.encrypt(JSON.stringify(freshConfig), newPw).toString();
                 
                 btn.innerHTML = 'Update Vault';
                 btn.disabled = false;
                 this.closeModal('changePasswordModal');
-                alert("Vault master key successfully updated.");
+                
+                // 3. Show Mandatory Code Update Modal
+                document.getElementById('htmlUpdateText').value = newEncryptedConfig;
+                document.getElementById('htmlUpdateModal').classList.remove('hidden');
             }
 
             toggleSidebar() {
@@ -1200,10 +1324,7 @@
                 setTimeout(() => { const ctx = document.getElementById('monthlyChart').getContext('2d'); new Chart(ctx, { type: 'bar', data: { labels: months.map(m => m.name), datasets: [ { label: 'Income', data: months.map(m => m.income), backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Expense', data: months.map(m => m.expense), backgroundColor: '#ef4444', borderRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {size: 10} } } }, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } } }); }, 50); 
             }
 
-            deleteCategory(id) { if(id===DAD_UDHAAR_ID)return alert('System Category'); if(confirm('Delete Category?')) { this.data.categories=this.data.categories.filter(c=>c.id!==id); this.save(); } }
-            addCategory(e) { e.preventDefault(); const f=e.target, t=f.type.value; this.data.categories.push({id:'cat_'+Date.now(), name:f.name.value, type:t, color:t==='productive'?'#10b981':(t==='waste'?'#ef4444':'#6366f1')}); this.save(); f.reset(); }
-            quickAddCategory() { const n=prompt("Category Name:"); if(n){ const t=confirm("Is this a productive expense? (OK for Yes, Cancel for Waste)")?'productive':'waste'; this.data.categories.push({id:'cat_'+Date.now(), name:n, type:t, color:t==='productive'?'#10b981':'#ef4444'}); this.save(); this.renderCategoryCheckboxes(); } }
-            importData(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=x=>{ try{const j=JSON.parse(x.target.result); if(j.transactions){this.data=j;this.save();alert('Data Imported and Synced to Cloud');}}catch(err){alert('Invalid File');} }; r.readAsText(f); }
+            importData(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=x=>{ try{const j=JSON.parse(x.target.result); if(j.transactions){this.data=j;this.save();this.showToast('Data Imported and Synced to GitHub');}}catch(err){alert('Invalid File');} }; r.readAsText(f); }
             exportData() { const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(this.data,null,2)); const a=document.createElement('a'); a.href=d; a.download=`shahi_vault_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
         }
         
