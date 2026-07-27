@@ -33,63 +33,122 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .input-dark { background-color: #0f172a; border: 1px solid #334155; color: white; transition: all 0.2s; }
-        .input-dark:focus { border-color: #0ea5e9; outline: none; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
-        
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .input-dark {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .input-dark:focus {
+            border-color: #0ea5e9;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+
         @media (max-width: 768px) {
-            .mobile-bottom-sheet { align-items: flex-end; }
-            .mobile-bottom-sheet > div:not(.absolute) { width: 100%; max-height: 90vh; border-radius: 1.5rem 1.5rem 0 0; border-bottom: none; animation: slideUp 0.3s ease-out; }
+            .mobile-bottom-sheet {
+                align-items: flex-end;
+            }
+
+            .mobile-bottom-sheet>div:not(.absolute) {
+                width: 100%;
+                max-height: 90vh;
+                border-radius: 1.5rem 1.5rem 0 0;
+                border-bottom: none;
+                animation: slideUp 0.3s ease-out;
+            }
         }
     </style>
 </head>
 
 <body class="h-screen overflow-hidden flex relative">
 
-    <div id="lockScreen" class="absolute inset-0 z-[100] bg-dark-bg flex items-center justify-center transition-opacity duration-300">
-        <div class="bg-dark-card p-6 md:p-8 rounded-2xl shadow-2xl border border-dark-border w-[90%] max-w-md text-center">
-            <div class="w-16 h-16 bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-brand-500/30">
+    <div id="lockScreen"
+        class="absolute inset-0 z-[100] bg-dark-bg flex items-center justify-center transition-opacity duration-300">
+        <div
+            class="bg-dark-card p-6 md:p-8 rounded-2xl shadow-2xl border border-dark-border w-[90%] max-w-md text-center">
+            <div
+                class="w-16 h-16 bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-brand-500/30">
                 <i class="fas fa-lock text-brand-500 text-2xl"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Shahi Finance</h2>
             <p id="lockSubtitle" class="text-gray-400 text-sm mb-6">Enter your master key to decrypt your vault.</p>
-            
+
             <!-- Standard Login Form -->
             <form id="loginForm" class="space-y-4">
                 <div class="relative">
                     <i class="fas fa-key absolute left-4 top-3.5 text-gray-500"></i>
-                    <input type="password" id="vaultPassword" class="input-dark w-full pl-10 pr-4 py-3 rounded-xl text-center tracking-widest text-lg" placeholder="••••••••" required>
+                    <input type="password" id="vaultPassword"
+                        class="input-dark w-full pl-10 pr-4 py-3 rounded-xl text-center tracking-widest text-lg"
+                        placeholder="••••••••" required>
                 </div>
                 <div class="flex items-center justify-start gap-2 text-sm text-gray-400 pb-2 pl-1">
-                    <input type="checkbox" id="rememberMe" class="rounded bg-dark-bg border-gray-600 text-brand-500 focus:ring-brand-500 cursor-pointer w-4 h-4">
+                    <input type="checkbox" id="rememberMe"
+                        class="rounded bg-dark-bg border-gray-600 text-brand-500 focus:ring-brand-500 cursor-pointer w-4 h-4">
                     <label for="rememberMe" class="cursor-pointer select-none">Remember this device</label>
                 </div>
-                <button type="submit" id="loginBtn" class="w-full bg-brand-600 hover:bg-brand-500 text-white py-3.5 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex justify-center items-center gap-2">
+                <button type="submit" id="loginBtn"
+                    class="w-full bg-brand-600 hover:bg-brand-500 text-white py-3.5 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex justify-center items-center gap-2">
                     <span>Unlock Vault</span>
                 </button>
-                <p id="loginError" class="text-rose-500 text-sm hidden mt-2 bg-rose-500/10 py-2 rounded">Incorrect password or network error.</p>
+                <p id="loginError" class="text-rose-500 text-sm hidden mt-2 bg-rose-500/10 py-2 rounded">Incorrect
+                    password or network error.</p>
             </form>
 
             <!-- Setup Form (Shows only if ENCRYPTED_GH_CONFIG is empty) -->
             <form id="setupForm" class="space-y-4 hidden" onsubmit="app.generateEncryptedConfig(event)">
-                <div class="bg-brand-500/10 border border-brand-500/30 p-3 rounded-xl text-xs text-brand-300 mb-4 text-left">
-                    <i class="fas fa-info-circle mr-1"></i> Paste your new GitHub token and repo details here. We will encrypt it so you can add it to your HTML file.
+                <div
+                    class="bg-brand-500/10 border border-brand-500/30 p-3 rounded-xl text-xs text-brand-300 mb-4 text-left">
+                    <i class="fas fa-info-circle mr-1"></i> Paste your new GitHub token and repo details here. We will
+                    encrypt it so you can add it to your HTML file.
                 </div>
                 <div>
-                    <input type="password" id="setupPwd" class="input-dark w-full rounded-xl px-4 py-3" placeholder="Create Master Password" required>
+                    <input type="password" id="setupPwd" class="input-dark w-full rounded-xl px-4 py-3"
+                        placeholder="Create Master Password" required>
                 </div>
                 <div>
-                    <input type="password" id="setupToken" class="input-dark w-full rounded-xl px-4 py-3" placeholder="GitHub Token (ghp_...)" required>
+                    <input type="password" id="setupToken" class="input-dark w-full rounded-xl px-4 py-3"
+                        placeholder="GitHub Token (ghp_...)" required>
                 </div>
                 <div>
-                    <input type="text" id="setupRepo" class="input-dark w-full rounded-xl px-4 py-3" placeholder="username/repository" required>
+                    <input type="text" id="setupRepo" class="input-dark w-full rounded-xl px-4 py-3"
+                        placeholder="username/repository" required>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-medium transition-all">
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-medium transition-all">
                     Generate Config
                 </button>
             </form>
@@ -97,8 +156,12 @@
             <!-- Setup Output Textarea -->
             <div id="setupOutput" class="hidden mt-6 text-left">
                 <p class="text-sm text-white font-bold mb-2">1. Copy this encrypted string:</p>
-                <textarea id="setupOutputText" class="w-full text-xs font-mono p-3 bg-black text-emerald-400 rounded-xl border border-dark-border mb-4 focus:outline-none" rows="4" readonly></textarea>
-                <p class="text-xs text-gray-400">2. Paste it between the quotes of the <code class="text-brand-400 bg-black px-1 rounded">ENCRYPTED_GH_CONFIG</code> variable inside the `<script>` tag of your index.html file, then push it to GitHub.</p>
+                <textarea id="setupOutputText"
+                    class="w-full text-xs font-mono p-3 bg-black text-emerald-400 rounded-xl border border-dark-border mb-4 focus:outline-none"
+                    rows="4" readonly></textarea>
+                <p class="text-xs text-gray-400">2. Paste it between the quotes of the <code
+                        class="text-brand-400 bg-black px-1 rounded">ENCRYPTED_GH_CONFIG</code> variable inside the
+                    script tag of your index.html file, then push it to GitHub.</p>
             </div>
         </div>
     </div>
@@ -107,69 +170,108 @@
     <div id="htmlUpdateModal" class="fixed inset-0 z-[110] hidden flex justify-center items-center">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
         <div class="relative w-full max-w-lg bg-dark-card border border-rose-500/50 rounded-2xl shadow-2xl p-6 md:p-8">
-            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2 text-rose-400"><i class="fas fa-exclamation-triangle"></i> Mandatory Code Update</h3>
-            <p class="text-gray-300 text-sm mb-4">You successfully changed your password. Because your GitHub token is encrypted using your password, we had to re-encrypt it.</p>
-            <p class="text-white font-bold text-sm mb-2">You MUST copy the string below and update the ENCRYPTED_GH_CONFIG variable in your index.html file immediately, otherwise you will be locked out upon refresh.</p>
-            
-            <textarea id="htmlUpdateText" class="w-full text-xs font-mono p-3 bg-black text-rose-400 rounded-xl border border-rose-500/30 mb-4 focus:outline-none" rows="5" readonly></textarea>
-            
-            <button onclick="app.closeModal('htmlUpdateModal')" class="w-full bg-dark-bg border border-dark-border text-white py-3 rounded-xl font-medium hover:bg-white/5">
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2 text-rose-400"><i
+                    class="fas fa-exclamation-triangle"></i> Mandatory Code Update</h3>
+            <p class="text-gray-300 text-sm mb-4">You successfully changed your password. Because your GitHub token is
+                encrypted using your password, we had to re-encrypt it.</p>
+            <p class="text-white font-bold text-sm mb-2">You MUST copy the string below and update the
+                ENCRYPTED_GH_CONFIG variable in your index.html file immediately, otherwise you will be locked out upon
+                refresh.</p>
+
+            <textarea id="htmlUpdateText"
+                class="w-full text-xs font-mono p-3 bg-black text-rose-400 rounded-xl border border-rose-500/30 mb-4 focus:outline-none"
+                rows="5" readonly></textarea>
+
+            <button onclick="app.closeModal('htmlUpdateModal')"
+                class="w-full bg-dark-bg border border-dark-border text-white py-3 rounded-xl font-medium hover:bg-white/5">
                 I have updated my HTML file
             </button>
         </div>
     </div>
 
-    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden transition-opacity duration-300 opacity-0" onclick="app.toggleSidebar()"></div>
+    <div id="sidebarBackdrop"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden transition-opacity duration-300 opacity-0"
+        onclick="app.toggleSidebar()"></div>
 
-    <aside id="mainSidebar" class="fixed md:relative z-40 w-72 md:w-64 h-full bg-dark-card border-r border-dark-border flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none hidden md:flex">
+    <aside id="mainSidebar"
+        class="fixed md:relative z-40 w-72 md:w-64 h-full bg-dark-card border-r border-dark-border flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none hidden md:flex">
         <div class="p-6 border-b border-dark-border flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold text-xl"><i class="fas fa-vault"></i></div>
+                <div
+                    class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                    <i class="fas fa-vault"></i></div>
                 <h1 class="text-xl font-bold tracking-tight text-white">Vault</h1>
             </div>
-            <button onclick="app.toggleSidebar()" class="md:hidden w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="app.toggleSidebar()"
+                class="md:hidden w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"><i
+                    class="fas fa-times text-xl"></i></button>
         </div>
 
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <button data-view="dashboard" onclick="app.setView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all active-nav"><i class="fas fa-chart-pie w-5"></i> Dashboard</button>
-            <button data-view="transactions" onclick="app.setView('transactions')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-list w-5"></i> Transactions</button>
-            <button data-view="categories" onclick="app.setView('categories')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-tags w-5"></i> Categories</button>
-            <button data-view="bulkCategorize" onclick="app.setView('bulkCategorize')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-layer-group w-5"></i> Bulk Categorize</button>
-            <button data-view="timeline" onclick="app.setView('timeline')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-brand-400 bg-brand-500/5 hover:text-white hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all"><i class="fas fa-chart-line w-5"></i> Timeline Analytics</button>
-            
-            <a href="healthManage.html" class="w-full flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl transition-all mt-2">
+            <button data-view="dashboard" onclick="app.setView('dashboard')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all active-nav"><i
+                    class="fas fa-chart-pie w-5"></i> Dashboard</button>
+            <button data-view="transactions" onclick="app.setView('transactions')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i
+                    class="fas fa-list w-5"></i> Transactions</button>
+            <button data-view="categories" onclick="app.setView('categories')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i
+                    class="fas fa-tags w-5"></i> Categories</button>
+            <button data-view="bulkCategorize" onclick="app.setView('bulkCategorize')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i
+                    class="fas fa-layer-group w-5"></i> Bulk Categorize</button>
+            <button data-view="timeline" onclick="app.setView('timeline')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 text-brand-400 bg-brand-500/5 hover:text-white hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all"><i
+                    class="fas fa-chart-line w-5"></i> Timeline Analytics</button>
+
+            <a href="healthManage.html"
+                class="w-full flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl transition-all mt-2">
                 <i class="fas fa-heart-pulse w-5"></i> Health Manager
             </a>
-            
+
             <div class="pt-6 mt-4 border-t border-dark-border">
-                <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Security & Data</div>
-                <button onclick="document.getElementById('importFile').click()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-file-import w-5"></i> Import JSON</button>
+                <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Security & Data
+                </div>
+                <button onclick="document.getElementById('importFile').click()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i
+                        class="fas fa-file-import w-5"></i> Import JSON</button>
                 <input type="file" id="importFile" hidden accept=".json">
-                <button onclick="app.exportData()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i class="fas fa-download w-5"></i> Backup Local</button>
-                
-                <button onclick="app.openChangePassword()" class="w-full flex items-center gap-3 px-4 py-3 text-brand-400 hover:bg-brand-500/10 rounded-xl transition-all mt-4"><i class="fas fa-key w-5"></i> Change Password</button>
-                <button onclick="app.logout()" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all mt-1"><i class="fas fa-sign-out-alt w-5"></i> Lock Vault</button>
+                <button onclick="app.exportData()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"><i
+                        class="fas fa-download w-5"></i> Backup Local</button>
+
+                <button onclick="app.openChangePassword()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-brand-400 hover:bg-brand-500/10 rounded-xl transition-all mt-4"><i
+                        class="fas fa-key w-5"></i> Change Password</button>
+                <button onclick="app.logout()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all mt-1"><i
+                        class="fas fa-sign-out-alt w-5"></i> Lock Vault</button>
             </div>
         </nav>
 
         <div class="p-4 border-t border-dark-border bg-dark-bg/50">
-            <button onclick="app.openSettings()" class="w-full flex items-center justify-between px-4 py-3 bg-dark-card border border-dark-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-brand-500 transition-colors shadow-sm">
-                <span class="flex items-center"><i class="fas fa-coins text-brand-500 w-5 mr-1"></i> Exchange Rates</span>
+            <button onclick="app.openSettings()"
+                class="w-full flex items-center justify-between px-4 py-3 bg-dark-card border border-dark-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-brand-500 transition-colors shadow-sm">
+                <span class="flex items-center"><i class="fas fa-coins text-brand-500 w-5 mr-1"></i> Exchange
+                    Rates</span>
                 <i class="fas fa-chevron-right text-xs opacity-50"></i>
             </button>
         </div>
     </aside>
 
     <main id="mainContent" class="flex-1 flex flex-col h-full relative overflow-hidden hidden w-full">
-        <header class="h-16 border-b border-dark-border bg-dark-card/80 backdrop-blur flex items-center justify-between px-4 md:px-6 z-10 sticky top-0">
+        <header
+            class="h-16 border-b border-dark-border bg-dark-card/80 backdrop-blur flex items-center justify-between px-4 md:px-6 z-10 sticky top-0">
             <div class="flex items-center gap-3 md:gap-4">
-                <button onclick="app.toggleSidebar()" class="md:hidden text-gray-300 hover:text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 active:bg-white/10 relative z-50">
+                <button onclick="app.toggleSidebar()"
+                    class="md:hidden text-gray-300 hover:text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 active:bg-white/10 relative z-50">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
                 <h2 id="pageTitle" class="text-lg md:text-xl font-bold text-white tracking-tight">Dashboard</h2>
             </div>
             <div class="hidden md:flex items-center gap-4">
-                <button onclick="app.openTransactionModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex items-center gap-2">
+                <button onclick="app.openTransactionModal()"
+                    class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex items-center gap-2">
                     <i class="fas fa-plus"></i> New Transaction
                 </button>
             </div>
@@ -177,66 +279,118 @@
 
         <div id="contentArea" class="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth pb-24 md:pb-6"></div>
 
-        <button onclick="app.openTransactionModal()" class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-brand-600 text-white rounded-full shadow-[0_8px_30px_rgb(14,165,233,0.3)] flex items-center justify-center text-2xl z-20 hover:scale-105 transition-transform active:scale-95">
+        <button onclick="app.openTransactionModal()"
+            class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-brand-600 text-white rounded-full shadow-[0_8px_30px_rgb(14,165,233,0.3)] flex items-center justify-center text-2xl z-20 hover:scale-105 transition-transform active:scale-95">
             <i class="fas fa-plus"></i>
         </button>
     </main>
 
     <div id="transactionModal" class="fixed inset-0 z-50 hidden mobile-bottom-sheet flex justify-center items-center">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="app.closeModal('transactionModal')"></div>
-        <div class="relative w-full max-w-2xl bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl flex flex-col max-h-[90vh] md:max-h-[85vh]">
+        <div
+            class="relative w-full max-w-2xl bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl flex flex-col max-h-[90vh] md:max-h-[85vh]">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto mt-3 md:hidden"></div>
             <div class="p-5 md:p-6 border-b border-dark-border flex justify-between items-center">
-                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-receipt text-brand-500"></i> <span id="modalTitle">New Transaction</span></h3>
-                <button onclick="app.closeModal('transactionModal')" class="text-gray-400 hover:text-white bg-dark-bg w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i
+                        class="fas fa-receipt text-brand-500"></i> <span id="modalTitle">New Transaction</span></h3>
+                <button onclick="app.closeModal('transactionModal')"
+                    class="text-gray-400 hover:text-white bg-dark-bg w-8 h-8 rounded-full flex items-center justify-center"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="p-5 md:p-6 overflow-y-auto custom-scrollbar pb-10 md:pb-6">
                 <form id="transactionForm" onsubmit="app.handleTransactionSubmit(event)">
                     <input type="hidden" id="editId">
                     <div class="grid grid-cols-2 gap-2 mb-6 p-1 bg-dark-bg rounded-xl border border-dark-border">
                         <label class="cursor-pointer">
-                            <input type="radio" name="type" value="in" class="peer sr-only" checked onchange="app.toggleFormType('in')">
-                            <div class="text-center py-2.5 rounded-lg peer-checked:bg-accent-prod peer-checked:text-white peer-checked:shadow text-gray-400 font-medium transition-all"><i class="fas fa-arrow-down mr-2 md:mr-2"></i>Income</div>
+                            <input type="radio" name="type" value="in" class="peer sr-only" checked
+                                onchange="app.toggleFormType('in')">
+                            <div
+                                class="text-center py-2.5 rounded-lg peer-checked:bg-accent-prod peer-checked:text-white peer-checked:shadow text-gray-400 font-medium transition-all">
+                                <i class="fas fa-arrow-down mr-2 md:mr-2"></i>Income</div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="type" value="out" class="peer sr-only" onchange="app.toggleFormType('out')">
-                            <div class="text-center py-2.5 rounded-lg peer-checked:bg-accent-waste peer-checked:text-white peer-checked:shadow text-gray-400 font-medium transition-all"><i class="fas fa-arrow-up mr-2 md:mr-2"></i>Expense</div>
+                            <input type="radio" name="type" value="out" class="peer sr-only"
+                                onchange="app.toggleFormType('out')">
+                            <div
+                                class="text-center py-2.5 rounded-lg peer-checked:bg-accent-waste peer-checked:text-white peer-checked:shadow text-gray-400 font-medium transition-all">
+                                <i class="fas fa-arrow-up mr-2 md:mr-2"></i>Expense</div>
                         </label>
                     </div>
-                    
+
                     <div id="moneyInFields" class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-400 mb-1.5">Gross Amount</label>
-                                <div class="flex"><input type="number" id="grossAmount" step="0.01" inputmode="decimal" class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select id="grossCurrency" class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold"><option value="usd">USD</option><option value="inr">INR</option><option value="npr">NPR</option></select></div>
+                                <div class="flex"><input type="number" id="grossAmount" step="0.01" inputmode="decimal"
+                                        class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select
+                                        id="grossCurrency"
+                                        class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold">
+                                        <option value="usd">USD</option>
+                                        <option value="inr">INR</option>
+                                        <option value="npr">NPR</option>
+                                    </select></div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-400 mb-1.5">Net Received</label>
-                                <div class="flex"><input type="number" id="netAmount" step="0.01" inputmode="decimal" class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select id="netCurrency" class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold"><option value="usd">USD</option><option value="inr">INR</option><option value="npr">NPR</option></select></div>
+                                <div class="flex"><input type="number" id="netAmount" step="0.01" inputmode="decimal"
+                                        class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select
+                                        id="netCurrency"
+                                        class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold">
+                                        <option value="usd">USD</option>
+                                        <option value="inr">INR</option>
+                                        <option value="npr">NPR</option>
+                                    </select></div>
                             </div>
                         </div>
-                        <div class="bg-dark-bg p-3.5 rounded-xl border border-dark-border flex justify-between items-center text-sm"><span class="text-gray-400"><i class="fas fa-calculator mr-2"></i>Calculated Fees:</span><span class="font-mono font-bold text-accent-waste text-base" id="liveFeeCalc">0.00 USD</span></div>
+                        <div
+                            class="bg-dark-bg p-3.5 rounded-xl border border-dark-border flex justify-between items-center text-sm">
+                            <span class="text-gray-400"><i class="fas fa-calculator mr-2"></i>Calculated
+                                Fees:</span><span class="font-mono font-bold text-accent-waste text-base"
+                                id="liveFeeCalc">0.00 USD</span></div>
                     </div>
-                    
+
                     <div id="moneyOutFields" class="space-y-4 hidden">
-                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Expense Name</label><input type="text" id="expenseName" class="input-dark w-full rounded-xl px-4 py-3" placeholder="e.g. Server Hosting"></div>
+                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Expense Name</label><input
+                                type="text" id="expenseName" class="input-dark w-full rounded-xl px-4 py-3"
+                                placeholder="e.g. Server Hosting"></div>
                         <div>
                             <label class="block text-sm font-medium text-gray-400 mb-1.5">Amount Spent</label>
-                            <div class="flex"><input type="number" id="expenseAmount" step="0.01" inputmode="decimal" class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select id="expenseCurrency" class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold"><option value="npr">NPR</option><option value="usd">USD</option><option value="inr">INR</option></select></div>
+                            <div class="flex"><input type="number" id="expenseAmount" step="0.01" inputmode="decimal"
+                                    class="input-dark w-full rounded-l-xl px-4 py-3" placeholder="0.00"><select
+                                    id="expenseCurrency"
+                                    class="input-dark rounded-r-xl px-2 border-l-0 bg-dark-bg text-sm font-bold">
+                                    <option value="npr">NPR</option>
+                                    <option value="usd">USD</option>
+                                    <option value="inr">INR</option>
+                                </select></div>
                         </div>
                         <div class="bg-dark-bg p-4 rounded-xl border border-dark-border">
-                            <div class="flex justify-between items-center mb-3"><label class="block text-sm font-medium text-gray-300"><i class="fas fa-tags mr-2 text-brand-500"></i>Categories</label><button type="button" onclick="app.quickAddCategory()" class="text-xs bg-brand-500/20 text-brand-400 px-2 py-1 rounded hover:bg-brand-500 hover:text-white transition-colors">+ New</button></div>
-                            <div id="categoryCheckboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1"></div>
+                            <div class="flex justify-between items-center mb-3"><label
+                                    class="block text-sm font-medium text-gray-300"><i
+                                        class="fas fa-tags mr-2 text-brand-500"></i>Categories</label><button
+                                    type="button" onclick="app.quickAddCategory()"
+                                    class="text-xs bg-brand-500/20 text-brand-400 px-2 py-1 rounded hover:bg-brand-500 hover:text-white transition-colors">+
+                                    New</button></div>
+                            <div id="categoryCheckboxes"
+                                class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
-                    
+
                     <div class="mt-5 space-y-4 pt-5 border-t border-dark-border">
-                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Date & Time</label><input type="datetime-local" id="transDate" class="input-dark w-full rounded-xl px-4 py-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Optional Notes</label><textarea id="description" rows="2" class="input-dark w-full rounded-xl px-4 py-3" placeholder="Add details..."></textarea></div>
+                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Date & Time</label><input
+                                type="datetime-local" id="transDate" class="input-dark w-full rounded-xl px-4 py-3">
+                        </div>
+                        <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Optional
+                                Notes</label><textarea id="description" rows="2"
+                                class="input-dark w-full rounded-xl px-4 py-3" placeholder="Add details..."></textarea>
+                        </div>
                     </div>
                     <div class="mt-8 flex gap-3">
-                        <button type="button" onclick="app.closeModal('transactionModal')" class="px-6 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg transition-colors font-medium w-1/3">Cancel</button>
-                        <button type="submit" id="saveTransactionBtn" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex justify-center items-center gap-2"><i class="fas fa-check"></i> Save Transaction</button>
+                        <button type="button" onclick="app.closeModal('transactionModal')"
+                            class="px-6 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg transition-colors font-medium w-1/3">Cancel</button>
+                        <button type="submit" id="saveTransactionBtn"
+                            class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all flex justify-center items-center gap-2"><i
+                                class="fas fa-check"></i> Save Transaction</button>
                     </div>
                 </form>
             </div>
@@ -245,46 +399,74 @@
 
     <div id="settingsModal" class="fixed inset-0 z-50 hidden mobile-bottom-sheet flex justify-center items-center">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="app.closeModal('settingsModal')"></div>
-        <div class="relative w-full max-w-sm bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl p-6 md:p-8">
+        <div
+            class="relative w-full max-w-sm bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl p-6 md:p-8">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto mt-0 mb-5 md:hidden"></div>
-            <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i class="fas fa-coins text-brand-500"></i> Currency Rates</h3>
+            <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i
+                    class="fas fa-coins text-brand-500"></i> Currency Rates</h3>
             <div class="space-y-5">
-                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">1 USD = ? INR</label><div class="relative"><span class="absolute left-4 top-3 text-gray-500">₹</span><input type="number" id="setUsdToInr" class="input-dark w-full rounded-xl pl-8 pr-4 py-3" step="0.01" inputmode="decimal"></div></div>
-                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">1 USD = ? NPR</label><div class="relative"><span class="absolute left-4 top-3 text-gray-500">रू</span><input type="number" id="setUsdToNpr" class="input-dark w-full rounded-xl pl-10 pr-4 py-3" step="0.01" inputmode="decimal"></div></div>
+                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">1 USD = ? INR</label>
+                    <div class="relative"><span class="absolute left-4 top-3 text-gray-500">₹</span><input type="number"
+                            id="setUsdToInr" class="input-dark w-full rounded-xl pl-8 pr-4 py-3" step="0.01"
+                            inputmode="decimal"></div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">1 USD = ? NPR</label>
+                    <div class="relative"><span class="absolute left-4 top-3 text-gray-500">रू</span><input
+                            type="number" id="setUsdToNpr" class="input-dark w-full rounded-xl pl-10 pr-4 py-3"
+                            step="0.01" inputmode="decimal"></div>
+                </div>
                 <div class="pt-4 flex gap-3">
-                    <button onclick="app.closeModal('settingsModal')" class="px-4 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg w-1/3">Close</button>
-                    <button onclick="app.saveSettings()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium">Save Rates</button>
+                    <button onclick="app.closeModal('settingsModal')"
+                        class="px-4 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg w-1/3">Close</button>
+                    <button onclick="app.saveSettings()"
+                        class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium">Save
+                        Rates</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="changePasswordModal" class="fixed inset-0 z-50 hidden mobile-bottom-sheet flex justify-center items-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="app.closeModal('changePasswordModal')"></div>
-        <div class="relative w-full max-w-md bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl p-6 md:p-8">
+    <div id="changePasswordModal"
+        class="fixed inset-0 z-50 hidden mobile-bottom-sheet flex justify-center items-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="app.closeModal('changePasswordModal')">
+        </div>
+        <div
+            class="relative w-full max-w-md bg-dark-card md:border border-dark-border md:rounded-2xl shadow-2xl p-6 md:p-8">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto mt-0 mb-5 md:hidden"></div>
-            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2"><i class="fas fa-shield-alt text-brand-500"></i> Change Master Key</h3>
-            <p class="text-gray-400 text-sm mb-6">This will re-encrypt your entire cloud vault AND your GitHub config.</p>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2"><i
+                    class="fas fa-shield-alt text-brand-500"></i> Change Master Key</h3>
+            <p class="text-gray-400 text-sm mb-6">This will re-encrypt your entire cloud vault AND your GitHub config.
+            </p>
             <form onsubmit="app.submitChangePassword(event)" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Current Password</label><input type="password" id="cpCurrent" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest" required></div>
-                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">New Password</label><input type="password" id="cpNew" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest" required minlength="4"></div>
-                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Confirm New Password</label><input type="password" id="cpConfirm" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest" required></div>
+                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Current Password</label><input
+                        type="password" id="cpCurrent" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest"
+                        required></div>
+                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">New Password</label><input
+                        type="password" id="cpNew" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest"
+                        required minlength="4"></div>
+                <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Confirm New Password</label><input
+                        type="password" id="cpConfirm" class="input-dark w-full rounded-xl px-4 py-3 tracking-widest"
+                        required></div>
                 <p id="cpError" class="text-rose-500 text-sm hidden bg-rose-500/10 py-2 px-3 rounded"></p>
                 <div class="pt-4 flex gap-3">
-                    <button type="button" onclick="app.closeModal('changePasswordModal')" class="px-4 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg w-1/3">Cancel</button>
-                    <button type="submit" id="cpSubmitBtn" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium flex justify-center items-center gap-2">Update Vault</button>
+                    <button type="button" onclick="app.closeModal('changePasswordModal')"
+                        class="px-4 py-3 rounded-xl border border-dark-border text-gray-300 hover:bg-dark-bg w-1/3">Cancel</button>
+                    <button type="submit" id="cpSubmitBtn"
+                        class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium flex justify-center items-center gap-2">Update
+                        Vault</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 items-end pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 items-end pointer-events-none">
+    </div>
 
     <script>
         /* =========================================================================
            🔐 PASTE YOUR ENCRYPTED GITHUB CONFIG HERE AFTER SETUP
            ========================================================================= */
-        const ENCRYPTED_GH_CONFIG = "";
+        const ENCRYPTED_GH_CONFIG = "U2FsdGVkX1/5/UTiWhNEpt19mO/Tk+5Z+TC58MecwXPuUJ2MOJ+CLX8FLLbBRa1N4UYttWz8csJyHg00YfNKvT7H/95o5wsU8AgqRU5BvKS1ayBR0KRP/cfG1l1FF48zfSUo4sMnniaFJqkfw1oE/65i3MUEeKyyQJjn27rTdnLniw2wY3fX0LFJ4r47Q+WlJpkBYfDera8LRhYVX8LzbOvJdGfQLopl23XVktBJQ12GvnXGPNXEVbs5xTMNBT4D";
 
 
         const DAD_UDHAAR_ID = "cat_1762946534522";
@@ -293,13 +475,13 @@
             constructor() {
                 this.data = { transactions: [], categories: [], currencyRates: { usdToInr: 90, usdToNpr: 144 } };
                 this.gh = { token: '', repo: '', path: '', sha: null };
-                
+
                 this.currentView = 'dashboard';
                 this.viewParams = {};
                 this.filterState = { search: '', category: 'all', type: 'all' };
                 this.vaultKey = null;
                 this.isSidebarOpen = false;
-                
+
                 this.timelineChart = null;
                 this.analysisExcludedTxs = new Set();
                 this.timelineDates = { start: '', end: '' };
@@ -320,7 +502,7 @@
                     document.getElementById('lockSubtitle').textContent = 'Configure your secure GitHub Bridge to begin.';
                 } else {
                     document.getElementById('loginForm').addEventListener('submit', (e) => this.login(e));
-                    
+
                     const savedKey = localStorage.getItem('shahi_vault_key');
                     if (savedKey) {
                         document.getElementById('vaultPassword').value = savedKey;
@@ -338,12 +520,12 @@
                 const pwd = document.getElementById('setupPwd').value;
                 const token = document.getElementById('setupToken').value.trim();
                 const repo = document.getElementById('setupRepo').value.trim();
-                
+
                 const configObj = { token: token, repo: repo, path: 'vault.json', sha: null };
-                
+
                 // Encrypt the JSON object using AES and the master password
                 const encryptedString = CryptoJS.AES.encrypt(JSON.stringify(configObj), pwd).toString();
-                
+
                 document.getElementById('setupForm').classList.add('hidden');
                 document.getElementById('setupOutput').classList.remove('hidden');
                 document.getElementById('setupOutputText').value = encryptedString;
@@ -355,15 +537,15 @@
                 const pwdInput = document.getElementById('vaultPassword').value;
                 const btn = document.getElementById('loginBtn');
                 const errorMsg = document.getElementById('loginError');
-                
+
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlocking...';
                 errorMsg.classList.add('hidden');
-            
+
                 try {
                     // 1. Decrypt GitHub Configuration from the hardcoded string
                     const configBytes = CryptoJS.AES.decrypt(ENCRYPTED_GH_CONFIG, pwdInput);
                     const configStr = configBytes.toString(CryptoJS.enc.Utf8);
-                    
+
                     if (!configStr) throw new Error("Incorrect Password");
                     this.gh = JSON.parse(configStr);
 
@@ -379,26 +561,26 @@
                     // 3. Handle entirely empty/new vault
                     if (response.status === 404) {
                         this.gh.sha = null;
-                        this.vaultKey = pwdInput; 
-                        this.handleSuccessfulLogin(); 
+                        this.vaultKey = pwdInput;
+                        this.handleSuccessfulLogin();
                         return;
                     }
-                    
+
                     if (!response.ok) throw new Error("GitHub sync failed. Ensure your token hasn't expired.");
-                    
+
                     const result = await response.json();
-                    this.gh.sha = result.sha; 
-                    
+                    this.gh.sha = result.sha;
+
                     // GitHub base64 contains newlines which breaks JS atob()
                     const base64Content = result.content.replace(/\n/g, '');
                     const encryptedVaultString = atob(base64Content);
-            
+
                     // 4. Decrypt Vault Data
                     const vaultBytes = CryptoJS.AES.decrypt(encryptedVaultString, pwdInput);
                     const decryptedVault = vaultBytes.toString(CryptoJS.enc.Utf8);
-                    
+
                     if (!decryptedVault) throw new Error("Vault decryption failed. Data might be corrupted.");
-            
+
                     let parsedData;
                     if (decryptedVault.startsWith('{')) {
                         parsedData = JSON.parse(decryptedVault);
@@ -406,17 +588,17 @@
                         const decompressed = LZString.decompressFromUTF16(decryptedVault);
                         parsedData = JSON.parse(decompressed);
                     }
-            
+
                     this.data = { ...this.data, ...parsedData };
-                    this.vaultKey = pwdInput; 
-                    
+                    this.vaultKey = pwdInput;
+
                     if (decryptedVault.startsWith('{')) {
                         console.log("Upgrading cloud vault to compressed format...");
-                        this.save(); 
+                        this.save();
                     }
-            
+
                     this.handleSuccessfulLogin();
-            
+
                 } catch (error) {
                     btn.innerHTML = 'Unlock Vault';
                     errorMsg.textContent = error.message;
@@ -432,10 +614,10 @@
                 const lockScreen = document.getElementById('lockScreen');
                 lockScreen.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => lockScreen.classList.add('hidden'), 300);
-                
+
                 document.getElementById('mainSidebar').classList.remove('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
-                
+
                 this.setView('dashboard');
                 this.setupLiveCalc();
             }
@@ -444,15 +626,15 @@
                 this.vaultKey = null;
                 this.data = { transactions: [], categories: [], currencyRates: { usdToInr: 90, usdToNpr: 144 } };
                 document.getElementById('vaultPassword').value = '';
-                
+
                 document.getElementById('mainSidebar').classList.add('hidden');
                 document.getElementById('mainContent').classList.add('hidden');
-                
+
                 const lockScreen = document.getElementById('lockScreen');
                 lockScreen.classList.remove('hidden');
                 setTimeout(() => lockScreen.classList.remove('opacity-0', 'pointer-events-none'), 10);
                 document.getElementById('loginBtn').innerHTML = 'Unlock Vault';
-                
+
                 if (this.isSidebarOpen) this.toggleSidebar();
             }
 
@@ -460,25 +642,25 @@
             async save() {
                 const saveBtn = document.getElementById('saveTransactionBtn');
                 const defaultBtnText = '<i class="fas fa-check"></i> Save Transaction';
-                
-                if (saveBtn) { 
-                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; 
-                    saveBtn.disabled = true; 
+
+                if (saveBtn) {
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                    saveBtn.disabled = true;
                 }
-            
+
                 try {
                     const stringifiedData = JSON.stringify(this.data);
                     const compressedData = LZString.compressToUTF16(stringifiedData);
                     const encryptedData = CryptoJS.AES.encrypt(compressedData, this.vaultKey).toString();
-                    
+
                     const base64Content = btoa(encryptedData);
-                    
+
                     const url = `https://api.github.com/repos/${this.gh.repo}/contents/${this.gh.path}`;
                     const bodyParams = {
                         message: `Vault Auto-Sync: ${new Date().toLocaleString()}`,
                         content: base64Content
                     };
-                    
+
                     if (this.gh.sha) { bodyParams.sha = this.gh.sha; }
 
                     const response = await fetch(url, {
@@ -490,15 +672,15 @@
                         },
                         body: JSON.stringify(bodyParams)
                     });
-                    
+
                     if (!response.ok) {
                         const errData = await response.json();
                         throw new Error(errData.message || `GitHub rejected save (Status ${response.status})`);
                     }
-                    
+
                     const result = await response.json();
                     this.gh.sha = result.content.sha; // Update local SHA hash
-                    
+
                     this.refreshCurrentView();
                     return true;
                 } catch (err) {
@@ -506,9 +688,9 @@
                     console.error(err);
                     return false;
                 } finally {
-                    if (saveBtn) { 
-                        saveBtn.innerHTML = defaultBtnText; 
-                        saveBtn.disabled = false; 
+                    if (saveBtn) {
+                        saveBtn.innerHTML = defaultBtnText;
+                        saveBtn.disabled = false;
                     }
                 }
             }
@@ -532,25 +714,25 @@
 
                 if (current !== this.vaultKey) { err.textContent = "Current password is wrong."; err.classList.remove('hidden'); return; }
                 if (newPw !== confirmPw) { err.textContent = "New passwords do not match."; err.classList.remove('hidden'); return; }
-                
+
                 err.classList.add('hidden');
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting...';
                 btn.disabled = true;
 
                 // 1. Update Vault Key & Re-save Vault to GitHub
-                this.vaultKey = newPw; 
+                this.vaultKey = newPw;
                 if (localStorage.getItem('shahi_vault_key')) localStorage.setItem('shahi_vault_key', newPw);
-                await this.save(); 
+                await this.save();
 
                 // 2. Generate a new encrypted GitHub Config string
                 // We zero out the sha here so if they deploy, it forces a fetch properly.
                 const freshConfig = { ...this.gh, sha: null };
                 const newEncryptedConfig = CryptoJS.AES.encrypt(JSON.stringify(freshConfig), newPw).toString();
-                
+
                 btn.innerHTML = 'Update Vault';
                 btn.disabled = false;
                 this.closeModal('changePasswordModal');
-                
+
                 // 3. Show Mandatory Code Update Modal
                 document.getElementById('htmlUpdateText').value = newEncryptedConfig;
                 document.getElementById('htmlUpdateModal').classList.remove('hidden');
@@ -560,7 +742,7 @@
                 const sb = document.getElementById('mainSidebar');
                 const bd = document.getElementById('sidebarBackdrop');
                 this.isSidebarOpen = !this.isSidebarOpen;
-                
+
                 if (this.isSidebarOpen) {
                     sb.classList.remove('hidden');
                     setTimeout(() => sb.classList.remove('-translate-x-full'), 10);
@@ -573,11 +755,11 @@
                 }
             }
 
-            closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='transactionModal') document.getElementById('transactionForm').reset(); }
+            closeModal(id) { document.getElementById(id).classList.add('hidden'); if (id === 'transactionModal') document.getElementById('transactionForm').reset(); }
 
             setView(view, params = {}) {
                 this.currentView = view; this.viewParams = params;
-                
+
                 if (this.isSidebarOpen && window.innerWidth < 768) this.toggleSidebar();
 
                 document.querySelectorAll('.nav-item').forEach(el => {
@@ -590,10 +772,10 @@
                 });
 
                 const content = document.getElementById('contentArea');
-                
-                if (view === 'dashboard') { document.getElementById('pageTitle').textContent = 'Dashboard'; this.renderDashboard(content); } 
-                else if (view === 'transactions') { document.getElementById('pageTitle').textContent = 'Transactions'; this.renderTransactions(content); } 
-                else if (view === 'categories') { document.getElementById('pageTitle').textContent = 'Categories'; this.renderCategories(content); } 
+
+                if (view === 'dashboard') { document.getElementById('pageTitle').textContent = 'Dashboard'; this.renderDashboard(content); }
+                else if (view === 'transactions') { document.getElementById('pageTitle').textContent = 'Transactions'; this.renderTransactions(content); }
+                else if (view === 'categories') { document.getElementById('pageTitle').textContent = 'Categories'; this.renderCategories(content); }
                 else if (view === 'yearDetails') { document.getElementById('pageTitle').textContent = `${params.year} Breakdown`; this.renderYearDetails(content, params.year); }
                 else if (view === 'timeline') { document.getElementById('pageTitle').textContent = 'Timeline Analytics'; this.renderTimeline(content); }
                 else if (view === 'bulkCategorize') { document.getElementById('pageTitle').textContent = 'Bulk Categorize'; this.renderBulkCategorize(content); }
@@ -670,7 +852,7 @@
                 const s = this.calculateStats(txs);
                 const ir = this.data.currencyRates.usdToInr;
                 const nr = this.data.currencyRates.usdToNpr;
-                
+
                 const grossTotal = Math.max(1, s.grossIn.usd);
                 const pProd = ((s.productive.usd / grossTotal) * 100).toFixed(1);
                 const pWaste = ((s.waste.usd / grossTotal) * 100).toFixed(1);
@@ -688,23 +870,23 @@
                             <div class="bg-dark-bg p-3 md:p-4 rounded-xl border border-dark-border border-l-4 border-l-emerald-500">
                                 <div class="text-gray-400 text-[10px] md:text-xs uppercase font-semibold mb-1">Productive</div>
                                 <div class="text-base md:text-xl font-bold text-emerald-400">$${this.fmt(s.productive.usd)}</div>
-                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.productive.usd*ir)} • रू${this.fmt(s.productive.usd*nr)}</div>
+                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.productive.usd * ir)} • रू${this.fmt(s.productive.usd * nr)}</div>
                             </div>
                             <div class="bg-dark-bg p-3 md:p-4 rounded-xl border border-dark-border border-l-4 border-l-rose-500">
                                 <div class="text-gray-400 text-[10px] md:text-xs uppercase font-semibold mb-1">Waste</div>
                                 <div class="text-base md:text-xl font-bold text-rose-400">$${this.fmt(s.waste.usd)}</div>
-                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.waste.usd*ir)} • रू${this.fmt(s.waste.usd*nr)}</div>
+                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.waste.usd * ir)} • रू${this.fmt(s.waste.usd * nr)}</div>
                             </div>
                             <div class="bg-dark-bg p-3 md:p-4 rounded-xl border border-dark-border border-l-4 border-l-green-500">
                                 <div class="text-gray-400 text-[10px] md:text-xs uppercase font-semibold mb-1">Dad Loan</div>
                                 <div class="text-base md:text-xl font-bold text-green-400">$${this.fmt(s.dadUdhaar.usd)}</div>
-                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.dadUdhaar.usd*ir)} • रू${this.fmt(s.dadUdhaar.usd*nr)}</div>
+                                <div class="text-[10px] text-gray-500 font-mono mt-0.5">₹${this.fmt(s.dadUdhaar.usd * ir)} • रू${this.fmt(s.dadUdhaar.usd * nr)}</div>
                             </div>
                             <div class="bg-dark-bg p-3 md:p-4 rounded-xl border border-dark-border border-l-4 border-l-indigo-500 relative overflow-hidden flex flex-col justify-between">
                                 <div>
                                     <div class="text-gray-400 text-[10px] md:text-xs uppercase font-semibold mb-1">Total Spent</div>
                                     <div class="text-base md:text-xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
-                                    <div class="text-[10px] text-gray-500 font-mono mt-0.5 mb-2">₹${this.fmt(s.expense.usd*ir)} • रू${this.fmt(s.expense.usd*nr)}</div>
+                                    <div class="text-[10px] text-gray-500 font-mono mt-0.5 mb-2">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</div>
                                 </div>
                                 <div class="flex gap-2 text-[9px] md:text-[10px] font-medium mt-1 mb-1 relative z-10">
                                     <span class="text-emerald-500">${pProd}% Prod</span>
@@ -764,8 +946,8 @@
                 if (this.filterState.type !== 'all') list = list.filter(t => t.type === this.filterState.type);
                 if (this.filterState.category !== 'all') list = list.filter(t => t.categories && t.categories.includes(this.filterState.category));
 
-                body.innerHTML = list.length === 0 
-                    ? '<div class="text-center text-gray-500 py-12 bg-dark-card rounded-xl border border-dark-border border-dashed"><i class="fas fa-receipt text-4xl mb-3 opacity-20"></i><br>No transactions found</div>' 
+                body.innerHTML = list.length === 0
+                    ? '<div class="text-center text-gray-500 py-12 bg-dark-card rounded-xl border border-dark-border border-dashed"><i class="fas fa-receipt text-4xl mb-3 opacity-20"></i><br>No transactions found</div>'
                     : list.map(t => this.transactionRow(t)).join('');
             }
 
@@ -774,14 +956,14 @@
                 const dateObj = new Date(t.date);
                 const date = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const time = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                
+
                 const usdVal = isIn ? t.netAmount.usd : t.amount.usd;
                 const inrVal = isIn ? t.netAmount.inr : t.amount.inr;
                 const nprVal = isIn ? t.netAmount.npr : t.amount.npr;
-                
+
                 const amtUsdTxt = isIn ? `+$${this.fmt(usdVal)}` : `-$${this.fmt(usdVal)}`;
                 const sub = isIn ? `Fee: $${this.fmt(t.fees.usd)}` : ``;
-                
+
                 let badges = !isIn && t.categories ? t.categories.map(id => { const c = this.data.categories.find(x => x.id === id); return c ? `<span class="text-[10px] px-2 py-0.5 rounded-full border bg-dark-bg truncate max-w-[80px]" style="border-color:${c.color}40; color:${c.color}">${c.name}</span>` : ''; }).join(' ') : '';
 
                 const isExcluded = this.analysisExcludedTxs.has(t.id);
@@ -963,12 +1145,12 @@
                     const offset = today.getTimezoneOffset() * 60000;
                     const localISOTime = (new Date(today - offset)).toISOString().slice(0, -1);
                     this.timelineDates.end = localISOTime.split('T')[0];
-                    
+
                     const past = new Date(today);
                     past.setDate(past.getDate() - 30);
                     const pastISO = (new Date(past - offset)).toISOString().slice(0, -1);
                     this.timelineDates.start = pastISO.split('T')[0];
-                    this.analysisExcludedTxs.clear(); 
+                    this.analysisExcludedTxs.clear();
                 }
 
                 container.innerHTML = `
@@ -1011,14 +1193,14 @@
                     
                     <div id="timelineAnalysisBody" class="space-y-6 pb-10"></div>
                 `;
-                
+
                 this.updateTimelineView();
             }
 
             generateTimeline() {
                 this.timelineDates.start = document.getElementById('tlStart').value;
                 this.timelineDates.end = document.getElementById('tlEnd').value;
-                this.analysisExcludedTxs.clear(); 
+                this.analysisExcludedTxs.clear();
                 this.updateTimelineView();
             }
 
@@ -1037,7 +1219,7 @@
 
                 const sortMode = this.timelineSort || 'date-desc';
                 const getAmt = (t) => t.type === 'in' ? t.netAmount.usd : t.amount.usd;
-                
+
                 rangeTxs.sort((a, b) => {
                     if (sortMode === 'date-desc') return new Date(b.date) - new Date(a.date);
                     if (sortMode === 'date-asc') return new Date(a.date) - new Date(b.date);
@@ -1060,7 +1242,7 @@
                         <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-indigo-500">
                             <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Spending</div>
                             <div class="text-2xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
-                            <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd*ir)} • रू${this.fmt(s.expense.usd*nr)}</div>
+                            <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</div>
                         </div>
                         <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500">
                             <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Productive</div>
@@ -1088,20 +1270,20 @@
                 if (rangeTxs.length > 0) {
                     setTimeout(() => {
                         const ctx = document.getElementById('timelineChart');
-                        if(!ctx) return;
+                        if (!ctx) return;
                         if (this.timelineChart) this.timelineChart.destroy();
-                        this.timelineChart = new Chart(ctx.getContext('2d'), { 
-                            type: 'doughnut', 
-                            data: { 
-                                labels: ['Productive', 'Waste', 'Dad Loan'], 
-                                datasets: [{ 
-                                    data: [s.productive.usd, s.waste.usd, s.dadUdhaar.usd], 
-                                    backgroundColor: ['#10b981', '#ef4444', '#4ade80'], 
-                                    borderWidth: 0, 
-                                    cutout: '60%' 
-                                }] 
-                            }, 
-                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, layout: { padding: 5 } } 
+                        this.timelineChart = new Chart(ctx.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Productive', 'Waste', 'Dad Loan'],
+                                datasets: [{
+                                    data: [s.productive.usd, s.waste.usd, s.dadUdhaar.usd],
+                                    backgroundColor: ['#10b981', '#ef4444', '#4ade80'],
+                                    borderWidth: 0,
+                                    cutout: '60%'
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, layout: { padding: 5 } }
                         });
                     }, 50);
                 }
@@ -1125,9 +1307,9 @@
                 if (this.timelineCategory !== 'all') {
                     rangeTxs = rangeTxs.filter(t => t.categories && t.categories.includes(this.timelineCategory));
                 }
-                
+
                 let activeTxs = rangeTxs.filter(t => !this.analysisExcludedTxs.has(t.id));
-                
+
                 const sortMode = this.timelineSort || 'date-desc';
                 const getAmt = (t) => t.type === 'in' ? t.netAmount.usd : t.amount.usd;
                 activeTxs.sort((a, b) => {
@@ -1143,7 +1325,7 @@
 
                 const pdfContainer = document.createElement('div');
                 pdfContainer.id = 'pdf-export-container';
-                
+
                 pdfContainer.innerHTML = `
                     <div style="padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; background: #fff; width: 100%; box-sizing: border-box;">
                         <div style="border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -1162,7 +1344,7 @@
                             <div style="flex: 1; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                 <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Spending</p>
                                 <p style="margin: 0; font-size: 24px; color: #0f172a; font-weight: bold;">$${this.fmt(s.expense.usd)}</p>
-                                <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; font-family: monospace;">₹${this.fmt(s.expense.usd*ir)} • रू${this.fmt(s.expense.usd*nr)}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; font-family: monospace;">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</p>
                             </div>
                             <div style="flex: 1; padding: 20px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
                                 <p style="margin: 0 0 5px 0; font-size: 12px; color: #166534; text-transform: uppercase; font-weight: bold;">Productive</p>
@@ -1186,27 +1368,27 @@
                             </thead>
                             <tbody>
                                 ${activeTxs.map((t, i) => {
-                                    const isIn = t.type === 'in';
-                                    const dObj = new Date(t.date);
-                                    const dStr = dObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-                                    
-                                    const usdVal = isIn ? t.netAmount.usd : t.amount.usd;
-                                    const inrVal = isIn ? t.netAmount.inr : t.amount.inr;
-                                    const nprVal = isIn ? t.netAmount.npr : t.amount.npr;
-                                    
-                                    const color = isIn ? '#15803d' : '#b91c1c';
-                                    const sign = isIn ? '+' : '-';
-                                    const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-                                    
-                                    let catNames = '';
-                                    if (!isIn && t.categories) {
-                                        catNames = t.categories.map(id => {
-                                            const c = this.data.categories.find(x => x.id === id);
-                                            return c ? c.name : '';
-                                        }).filter(Boolean).join(', ');
-                                    }
-                                    
-                                    return `
+                    const isIn = t.type === 'in';
+                    const dObj = new Date(t.date);
+                    const dStr = dObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+                    const usdVal = isIn ? t.netAmount.usd : t.amount.usd;
+                    const inrVal = isIn ? t.netAmount.inr : t.amount.inr;
+                    const nprVal = isIn ? t.netAmount.npr : t.amount.npr;
+
+                    const color = isIn ? '#15803d' : '#b91c1c';
+                    const sign = isIn ? '+' : '-';
+                    const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+
+                    let catNames = '';
+                    if (!isIn && t.categories) {
+                        catNames = t.categories.map(id => {
+                            const c = this.data.categories.find(x => x.id === id);
+                            return c ? c.name : '';
+                        }).filter(Boolean).join(', ');
+                    }
+
+                    return `
                                     <tr style="background-color: ${bg}; border-bottom: 1px solid #e2e8f0;">
                                         <td style="padding: 12px 8px; color: #475569; vertical-align: top;">${dStr}</td>
                                         <td style="padding: 12px 8px; color: #0f172a; font-weight: 500; vertical-align: top;">${t.name || (isIn ? 'Money Added' : 'General Expense')}</td>
@@ -1217,7 +1399,7 @@
                                         </td>
                                     </tr>
                                     `;
-                                }).join('')}
+                }).join('')}
                             </tbody>
                         </table>
                         
@@ -1233,11 +1415,11 @@
 
                 const catSuffix = this.timelineCategory !== 'all' ? `_${((this.data.categories.find(c => c.id === this.timelineCategory) || {}).name || '').replace(/[^a-z0-9]+/gi, '_')}` : '';
                 const opt = {
-                    margin:       [0.4, 0.4, 0.4, 0.4], 
-                    filename:     `Shahi_Statement_${this.timelineDates.start}_to_${this.timelineDates.end}${catSuffix}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true },
-                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    margin: [0.4, 0.4, 0.4, 0.4],
+                    filename: `Shahi_Statement_${this.timelineDates.start}_to_${this.timelineDates.end}${catSuffix}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
                 };
 
                 html2pdf().set(opt).from(pdfContainer.children[0]).save().then(() => {
@@ -1246,48 +1428,48 @@
             }
 
             /* --- HELPERS & REST --- */
-            statCard(title, val, color, icon, bgClass) { 
+            statCard(title, val, color, icon, bgClass) {
                 const inr = this.fmt(val * this.data.currencyRates.usdToInr);
                 const npr = this.fmt(val * this.data.currencyRates.usdToNpr);
-                return `<div class="bg-dark-card border border-dark-border rounded-xl p-4 flex flex-col justify-between hover:bg-dark-border/30 transition-colors"><div class="flex justify-between items-start mb-2"><p class="text-gray-400 text-[10px] md:text-xs font-semibold uppercase tracking-wider">${title}</p><div class="w-7 h-7 md:w-8 md:h-8 rounded-lg ${bgClass} flex items-center justify-center"><i class="fas ${icon} ${color} text-xs md:text-sm"></i></div></div><div><p class="text-lg md:text-xl font-bold text-white leading-none">$${this.fmt(val)}</p><p class="text-[10px] text-gray-500 mt-1.5 font-mono">₹${inr} • रू${npr}</p></div></div>`; 
-            }
-            
-            calculateStats(txsArray) { 
-                const stats = { grossIn: {usd:0}, fees: {usd:0}, netIn: {usd:0}, expense: {usd:0}, productive: {usd:0}, waste: {usd:0}, dadUdhaar: {usd:0}, balance: {usd:0,inr:0,npr:0} }; 
-                txsArray.forEach(t => { 
-                    if (t.type === 'in') { 
-                        stats.grossIn.usd += t.grossAmount.usd; stats.fees.usd += t.fees.usd; stats.netIn.usd += t.netAmount.usd; 
-                    } else { 
-                        stats.expense.usd += t.amount.usd; 
-                        if (t.categories && t.categories.length > 0) { 
-                            if (t.categories.includes(DAD_UDHAAR_ID)) stats.dadUdhaar.usd += (t.amount.usd / t.categories.length); 
-                            const split = t.amount.usd / t.categories.length; 
-                            t.categories.forEach(cid => { 
-                                const c = this.data.categories.find(x => x.id === cid); 
-                                if (c) { 
-                                    if (c.type === 'productive') stats.productive.usd += split; 
-                                    if (c.type === 'waste') stats.waste.usd += split; 
-                                } 
-                            }); 
-                        } else {
-                            stats.waste.usd += t.amount.usd; 
-                        }
-                    } 
-                }); 
-                stats.balance.usd = stats.netIn.usd - stats.expense.usd; 
-                stats.balance.inr = stats.balance.usd * this.data.currencyRates.usdToInr; 
-                stats.balance.npr = stats.balance.usd * this.data.currencyRates.usdToNpr; 
-                return stats; 
+                return `<div class="bg-dark-card border border-dark-border rounded-xl p-4 flex flex-col justify-between hover:bg-dark-border/30 transition-colors"><div class="flex justify-between items-start mb-2"><p class="text-gray-400 text-[10px] md:text-xs font-semibold uppercase tracking-wider">${title}</p><div class="w-7 h-7 md:w-8 md:h-8 rounded-lg ${bgClass} flex items-center justify-center"><i class="fas ${icon} ${color} text-xs md:text-sm"></i></div></div><div><p class="text-lg md:text-xl font-bold text-white leading-none">$${this.fmt(val)}</p><p class="text-[10px] text-gray-500 mt-1.5 font-mono">₹${inr} • रू${npr}</p></div></div>`;
             }
 
-            openSettings() { if(this.isSidebarOpen)this.toggleSidebar(); document.getElementById('setUsdToInr').value = this.data.currencyRates.usdToInr; document.getElementById('setUsdToNpr').value = this.data.currencyRates.usdToNpr; document.getElementById('settingsModal').classList.remove('hidden'); }
-            saveSettings() { const i = parseFloat(document.getElementById('setUsdToInr').value), n = parseFloat(document.getElementById('setUsdToNpr').value); if(i&&n){ this.data.currencyRates={usdToInr:i,usdToNpr:n}; this.save(); document.getElementById('settingsModal').classList.add('hidden'); } }
-            openTransactionModal() { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('modalTitle').textContent="New Transaction"; document.getElementById('editId').value=""; document.getElementById('transactionForm').reset(); document.getElementById('transDate').value=new Date().toISOString().slice(0,16); document.querySelector('input[name="type"][value="out"]').click(); this.renderCategoryCheckboxes(); }
-            toggleFormType(t) { if(t==='in'){document.getElementById('moneyInFields').classList.remove('hidden');document.getElementById('moneyOutFields').classList.add('hidden');}else{document.getElementById('moneyInFields').classList.add('hidden');document.getElementById('moneyOutFields').classList.remove('hidden');} }
-            setupLiveCalc() { ['grossAmount','netAmount','grossCurrency','netCurrency'].forEach(id=>document.getElementById(id).addEventListener('input',()=>this.updateLiveFee())); }
-            updateLiveFee() { const g=parseFloat(document.getElementById('grossAmount').value)||0, n=parseFloat(document.getElementById('netAmount').value)||0, gc=document.getElementById('grossCurrency').value, nc=document.getElementById('netCurrency').value; const fee = Math.max(0, this.convert(g,gc,'usd') - this.convert(n,nc,'usd')); document.getElementById('liveFeeCalc').textContent = `${this.fmt(fee)} USD`; }
-            convert(amt,from,to) { if(from==='usd')return amt; if(from==='inr')return amt/this.data.currencyRates.usdToInr; if(from==='npr')return amt/this.data.currencyRates.usdToNpr; return amt; }
-            fmt(n) { return n?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00'; }
+            calculateStats(txsArray) {
+                const stats = { grossIn: { usd: 0 }, fees: { usd: 0 }, netIn: { usd: 0 }, expense: { usd: 0 }, productive: { usd: 0 }, waste: { usd: 0 }, dadUdhaar: { usd: 0 }, balance: { usd: 0, inr: 0, npr: 0 } };
+                txsArray.forEach(t => {
+                    if (t.type === 'in') {
+                        stats.grossIn.usd += t.grossAmount.usd; stats.fees.usd += t.fees.usd; stats.netIn.usd += t.netAmount.usd;
+                    } else {
+                        stats.expense.usd += t.amount.usd;
+                        if (t.categories && t.categories.length > 0) {
+                            if (t.categories.includes(DAD_UDHAAR_ID)) stats.dadUdhaar.usd += (t.amount.usd / t.categories.length);
+                            const split = t.amount.usd / t.categories.length;
+                            t.categories.forEach(cid => {
+                                const c = this.data.categories.find(x => x.id === cid);
+                                if (c) {
+                                    if (c.type === 'productive') stats.productive.usd += split;
+                                    if (c.type === 'waste') stats.waste.usd += split;
+                                }
+                            });
+                        } else {
+                            stats.waste.usd += t.amount.usd;
+                        }
+                    }
+                });
+                stats.balance.usd = stats.netIn.usd - stats.expense.usd;
+                stats.balance.inr = stats.balance.usd * this.data.currencyRates.usdToInr;
+                stats.balance.npr = stats.balance.usd * this.data.currencyRates.usdToNpr;
+                return stats;
+            }
+
+            openSettings() { if (this.isSidebarOpen) this.toggleSidebar(); document.getElementById('setUsdToInr').value = this.data.currencyRates.usdToInr; document.getElementById('setUsdToNpr').value = this.data.currencyRates.usdToNpr; document.getElementById('settingsModal').classList.remove('hidden'); }
+            saveSettings() { const i = parseFloat(document.getElementById('setUsdToInr').value), n = parseFloat(document.getElementById('setUsdToNpr').value); if (i && n) { this.data.currencyRates = { usdToInr: i, usdToNpr: n }; this.save(); document.getElementById('settingsModal').classList.add('hidden'); } }
+            openTransactionModal() { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('modalTitle').textContent = "New Transaction"; document.getElementById('editId').value = ""; document.getElementById('transactionForm').reset(); document.getElementById('transDate').value = new Date().toISOString().slice(0, 16); document.querySelector('input[name="type"][value="out"]').click(); this.renderCategoryCheckboxes(); }
+            toggleFormType(t) { if (t === 'in') { document.getElementById('moneyInFields').classList.remove('hidden'); document.getElementById('moneyOutFields').classList.add('hidden'); } else { document.getElementById('moneyInFields').classList.add('hidden'); document.getElementById('moneyOutFields').classList.remove('hidden'); } }
+            setupLiveCalc() { ['grossAmount', 'netAmount', 'grossCurrency', 'netCurrency'].forEach(id => document.getElementById(id).addEventListener('input', () => this.updateLiveFee())); }
+            updateLiveFee() { const g = parseFloat(document.getElementById('grossAmount').value) || 0, n = parseFloat(document.getElementById('netAmount').value) || 0, gc = document.getElementById('grossCurrency').value, nc = document.getElementById('netCurrency').value; const fee = Math.max(0, this.convert(g, gc, 'usd') - this.convert(n, nc, 'usd')); document.getElementById('liveFeeCalc').textContent = `${this.fmt(fee)} USD`; }
+            convert(amt, from, to) { if (from === 'usd') return amt; if (from === 'inr') return amt / this.data.currencyRates.usdToInr; if (from === 'npr') return amt / this.data.currencyRates.usdToNpr; return amt; }
+            fmt(n) { return n ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'; }
             showToast(message, type = 'success') {
                 const container = document.getElementById('toastContainer');
                 if (!container) { alert(message); return; }
@@ -1300,35 +1482,36 @@
                 setTimeout(() => { el.classList.add('opacity-0'); setTimeout(() => el.remove(), 300); }, 3500);
             }
             renderCategoryCheckboxes() { document.getElementById('categoryCheckboxes').innerHTML = this.data.categories.map(c => `<label class="flex items-center space-x-2 cursor-pointer hover:bg-white/5 p-2 rounded-lg border border-transparent hover:border-dark-border transition-colors"><input type="checkbox" name="cats" value="${c.id}" class="form-checkbox text-brand-500 rounded bg-dark-bg border-gray-600 w-4 h-4"><span class="text-sm font-medium" style="color:${c.color}">${c.name}</span></label>`).join(''); }
-            handleTransactionSubmit(e) { e.preventDefault(); const id=document.getElementById('editId').value, type=document.querySelector('input[name="type"]:checked').value, date=document.getElementById('transDate').value, desc=document.getElementById('description').value; let t={id:id||'trans_'+Date.now(),type,date,description:desc}; if(type==='in'){ const g=parseFloat(document.getElementById('grossAmount').value)||0, n=parseFloat(document.getElementById('netAmount').value)||0; const gu=this.convert(g,document.getElementById('grossCurrency').value,'usd'), nu=this.convert(n,document.getElementById('netCurrency').value,'usd'); t.grossAmount=this.makeAmt(gu); t.netAmount=this.makeAmt(nu); t.fees=this.makeAmt(Math.max(0,gu-nu)); } else { const nm=document.getElementById('expenseName').value, val=parseFloat(document.getElementById('expenseAmount').value)||0, cats=Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(cb=>cb.value); t.name=nm; t.amount=this.makeAmt(this.convert(val,document.getElementById('expenseCurrency').value,'usd')); t.categories=cats; } if(id){ const i=this.data.transactions.findIndex(x=>x.id===id); if(i!==-1)this.data.transactions[i]=t; } else this.data.transactions.push(t); this.save(); this.closeModal('transactionModal'); }
-            editTransaction(id) { const t=this.data.transactions.find(x=>x.id===id); if(!t)return; this.openTransactionModal(); document.getElementById('modalTitle').textContent="Edit Transaction"; document.getElementById('editId').value=t.id; document.getElementById('transDate').value=new Date(t.date).toISOString().slice(0,16); document.getElementById('description').value=t.description||''; document.querySelector(`input[name="type"][value="${t.type}"]`).click(); if(t.type==='in'){ document.getElementById('grossAmount').value=t.grossAmount.usd; document.getElementById('grossCurrency').value='usd'; document.getElementById('netAmount').value=t.netAmount.usd; document.getElementById('netCurrency').value='usd'; } else { document.getElementById('expenseName').value=t.name; document.getElementById('expenseAmount').value=t.amount.usd; document.getElementById('expenseCurrency').value='usd'; setTimeout(()=>{t.categories.forEach(c=>{const cb=document.querySelector(`input[name="cats"][value="${c}"]`); if(cb)cb.checked=true;})},50); } }
-            makeAmt(u) { return {usd:u, inr:u*this.data.currencyRates.usdToInr, npr:u*this.data.currencyRates.usdToNpr}; }
-            deleteTransaction(id) { if(confirm('Delete this transaction?')) { this.data.transactions=this.data.transactions.filter(t=>t.id!==id); this.save(); } }
-            
+            handleTransactionSubmit(e) { e.preventDefault(); const id = document.getElementById('editId').value, type = document.querySelector('input[name="type"]:checked').value, date = document.getElementById('transDate').value, desc = document.getElementById('description').value; let t = { id: id || 'trans_' + Date.now(), type, date, description: desc }; if (type === 'in') { const g = parseFloat(document.getElementById('grossAmount').value) || 0, n = parseFloat(document.getElementById('netAmount').value) || 0; const gu = this.convert(g, document.getElementById('grossCurrency').value, 'usd'), nu = this.convert(n, document.getElementById('netCurrency').value, 'usd'); t.grossAmount = this.makeAmt(gu); t.netAmount = this.makeAmt(nu); t.fees = this.makeAmt(Math.max(0, gu - nu)); } else { const nm = document.getElementById('expenseName').value, val = parseFloat(document.getElementById('expenseAmount').value) || 0, cats = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(cb => cb.value); t.name = nm; t.amount = this.makeAmt(this.convert(val, document.getElementById('expenseCurrency').value, 'usd')); t.categories = cats; } if (id) { const i = this.data.transactions.findIndex(x => x.id === id); if (i !== -1) this.data.transactions[i] = t; } else this.data.transactions.push(t); this.save(); this.closeModal('transactionModal'); }
+            editTransaction(id) { const t = this.data.transactions.find(x => x.id === id); if (!t) return; this.openTransactionModal(); document.getElementById('modalTitle').textContent = "Edit Transaction"; document.getElementById('editId').value = t.id; document.getElementById('transDate').value = new Date(t.date).toISOString().slice(0, 16); document.getElementById('description').value = t.description || ''; document.querySelector(`input[name="type"][value="${t.type}"]`).click(); if (t.type === 'in') { document.getElementById('grossAmount').value = t.grossAmount.usd; document.getElementById('grossCurrency').value = 'usd'; document.getElementById('netAmount').value = t.netAmount.usd; document.getElementById('netCurrency').value = 'usd'; } else { document.getElementById('expenseName').value = t.name; document.getElementById('expenseAmount').value = t.amount.usd; document.getElementById('expenseCurrency').value = 'usd'; setTimeout(() => { t.categories.forEach(c => { const cb = document.querySelector(`input[name="cats"][value="${c}"]`); if (cb) cb.checked = true; }) }, 50); } }
+            makeAmt(u) { return { usd: u, inr: u * this.data.currencyRates.usdToInr, npr: u * this.data.currencyRates.usdToNpr }; }
+            deleteTransaction(id) { if (confirm('Delete this transaction?')) { this.data.transactions = this.data.transactions.filter(t => t.id !== id); this.save(); } }
+
             /* -- CATEGORIES PAGE & YEAR DETAILS -- */
             renderCategories(container) { container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-1 bg-dark-card rounded-2xl p-6 border border-dark-border shadow-sm h-fit"><h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-plus-circle text-brand-500"></i> New Category</h3><form onsubmit="app.addCategory(event)" class="space-y-4"><div><input type="text" name="name" placeholder="Category Name" class="input-dark w-full rounded-xl px-4 py-3" required></div><div><select name="type" class="input-dark w-full rounded-xl px-4 py-3"><option value="productive">Productive Expense</option><option value="waste">Waste Expense</option><option value="recoverable">Recoverable (Loan)</option></select></div><button type="submit" class="w-full bg-brand-600 text-white px-4 py-3 rounded-xl hover:bg-brand-500 transition-colors font-medium">Add Category</button></form></div><div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 h-fit">${this.data.categories.map(c => `<div class="bg-dark-card border border-dark-border p-4 rounded-xl flex justify-between items-center hover:bg-dark-border/30 transition-colors relative overflow-hidden"><div class="absolute left-0 top-0 bottom-0 w-1.5" style="background-color: ${c.color}"></div><div class="pl-2"> <div class="font-bold text-white">${c.name}</div><div class="text-xs text-gray-500 capitalize mt-0.5">${c.type}</div></div><button onclick="app.deleteCategory('${c.id}')" class="w-8 h-8 rounded-lg bg-dark-bg text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors"><i class="fas fa-trash text-sm"></i></button></div>`).join('')}</div></div>`; }
-            
-            renderYearDetails(container, year) { 
+
+            renderYearDetails(container, year) {
                 const ir = this.data.currencyRates.usdToInr;
                 const nr = this.data.currencyRates.usdToNpr;
-                const months = Array.from({length: 12}, (_, i) => ({ index: i, name: new Date(0, i).toLocaleString('en-US', {month: 'short'}), income: 0, expense: 0 })); 
-                const txs = this.data.transactions.filter(t => new Date(t.date).getFullYear() === year); 
-                txs.forEach(t => { const mIndex = new Date(t.date).getMonth(); if (t.type === 'in') months[mIndex].income += t.netAmount.usd; else months[mIndex].expense += t.amount.usd; }); 
-                const totalInc = months.reduce((a, b) => a + b.income, 0); const totalExp = months.reduce((a, b) => a + b.expense, 0); 
-                
+                const months = Array.from({ length: 12 }, (_, i) => ({ index: i, name: new Date(0, i).toLocaleString('en-US', { month: 'short' }), income: 0, expense: 0 }));
+                const txs = this.data.transactions.filter(t => new Date(t.date).getFullYear() === year);
+                txs.forEach(t => { const mIndex = new Date(t.date).getMonth(); if (t.type === 'in') months[mIndex].income += t.netAmount.usd; else months[mIndex].expense += t.amount.usd; });
+                const totalInc = months.reduce((a, b) => a + b.income, 0); const totalExp = months.reduce((a, b) => a + b.expense, 0);
+
                 container.innerHTML = `<div class="mb-6"><button onclick="app.setView('dashboard')" class="flex items-center text-gray-400 hover:text-white transition-colors mb-4 bg-dark-card border border-dark-border w-fit px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-arrow-left mr-2"></i> Dashboard</button><div class="bg-dark-card border border-dark-border rounded-2xl p-5 md:p-6 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-2"><div><h3 class="text-xl md:text-2xl font-bold text-white">${year} Performance</h3><p class="text-gray-400 text-sm mt-1">Net Savings: <span class="${totalInc >= totalExp ? 'text-emerald-400' : 'text-rose-400'} font-bold">$${this.fmt(totalInc - totalExp)}</span></p></div></div><div class="h-48 md:h-64 w-full"><canvas id="monthlyChart"></canvas></div></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">${months.map(m => {
                     const net = m.income - m.expense;
-                    return `<div class="bg-dark-card border border-dark-border p-4 rounded-xl flex justify-between items-center hover:border-brand-500/30 transition-colors"><div class="font-bold text-white text-lg w-16">${m.name}</div><div class="text-right"><div class="text-emerald-400 text-sm font-mono">+ $${this.fmt(m.income)}</div><div class="text-[9px] text-gray-500 font-mono mb-1">₹${this.fmt(m.income*ir)} • रू${this.fmt(m.income*nr)}</div><div class="text-rose-400 text-sm font-mono">- $${this.fmt(m.expense)}</div><div class="text-[9px] text-gray-500 font-mono">₹${this.fmt(m.expense*ir)} • रू${this.fmt(m.expense*nr)}</div><div class="border-t border-gray-700 mt-1.5 pt-1.5 text-[10px] md:text-xs text-gray-500 font-mono">Net: ${net >= 0 ? '+' : ''}${Math.round(net)} USD</div></div></div>`;
-                }).join('')}</div>`; 
-                
-                setTimeout(() => { const ctx = document.getElementById('monthlyChart').getContext('2d'); new Chart(ctx, { type: 'bar', data: { labels: months.map(m => m.name), datasets: [ { label: 'Income', data: months.map(m => m.income), backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Expense', data: months.map(m => m.expense), backgroundColor: '#ef4444', borderRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {size: 10} } } }, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } } }); }, 50); 
+                    return `<div class="bg-dark-card border border-dark-border p-4 rounded-xl flex justify-between items-center hover:border-brand-500/30 transition-colors"><div class="font-bold text-white text-lg w-16">${m.name}</div><div class="text-right"><div class="text-emerald-400 text-sm font-mono">+ $${this.fmt(m.income)}</div><div class="text-[9px] text-gray-500 font-mono mb-1">₹${this.fmt(m.income * ir)} • रू${this.fmt(m.income * nr)}</div><div class="text-rose-400 text-sm font-mono">- $${this.fmt(m.expense)}</div><div class="text-[9px] text-gray-500 font-mono">₹${this.fmt(m.expense * ir)} • रू${this.fmt(m.expense * nr)}</div><div class="border-t border-gray-700 mt-1.5 pt-1.5 text-[10px] md:text-xs text-gray-500 font-mono">Net: ${net >= 0 ? '+' : ''}${Math.round(net)} USD</div></div></div>`;
+                }).join('')}</div>`;
+
+                setTimeout(() => { const ctx = document.getElementById('monthlyChart').getContext('2d'); new Chart(ctx, { type: 'bar', data: { labels: months.map(m => m.name), datasets: [{ label: 'Income', data: months.map(m => m.income), backgroundColor: '#10b981', borderRadius: 4 }, { label: 'Expense', data: months.map(m => m.expense), backgroundColor: '#ef4444', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } } }, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } } }); }, 50);
             }
 
-            importData(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=x=>{ try{const j=JSON.parse(x.target.result); if(j.transactions){this.data=j;this.save();this.showToast('Data Imported and Synced to GitHub');}}catch(err){alert('Invalid File');} }; r.readAsText(f); }
-            exportData() { const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(this.data,null,2)); const a=document.createElement('a'); a.href=d; a.download=`shahi_vault_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+            importData(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = x => { try { const j = JSON.parse(x.target.result); if (j.transactions) { this.data = j; this.save(); this.showToast('Data Imported and Synced to GitHub'); } } catch (err) { alert('Invalid File'); } }; r.readAsText(f); }
+            exportData() { const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data, null, 2)); const a = document.createElement('a'); a.href = d; a.download = `shahi_vault_backup_${new Date().toISOString().slice(0, 10)}.json`; a.click(); }
         }
-        
+
         const app = new FinanceApp();
     </script>
 </body>
+
 </html>
