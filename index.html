@@ -107,7 +107,6 @@
             <h2 class="text-2xl font-bold text-white mb-2">Shahi Finance</h2>
             <p id="lockSubtitle" class="text-gray-400 text-sm mb-6">Enter your master key to decrypt your vault.</p>
 
-            <!-- Standard Login Form -->
             <form id="loginForm" class="space-y-4">
                 <div class="relative">
                     <i class="fas fa-key absolute left-4 top-3.5 text-gray-500"></i>
@@ -128,7 +127,6 @@
                     password or network error.</p>
             </form>
 
-            <!-- Setup Form (Shows only if ENCRYPTED_GH_CONFIG is empty) -->
             <form id="setupForm" class="space-y-4 hidden" onsubmit="app.generateEncryptedConfig(event)">
                 <div
                     class="bg-brand-500/10 border border-brand-500/30 p-3 rounded-xl text-xs text-brand-300 mb-4 text-left">
@@ -153,7 +151,6 @@
                 </button>
             </form>
 
-            <!-- Setup Output Textarea -->
             <div id="setupOutput" class="hidden mt-6 text-left">
                 <p class="text-sm text-white font-bold mb-2">1. Copy this encrypted string:</p>
                 <textarea id="setupOutputText"
@@ -166,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Required Manual HTML Update Modal (For Password Changes) -->
     <div id="htmlUpdateModal" class="fixed inset-0 z-[110] hidden flex justify-center items-center">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
         <div class="relative w-full max-w-lg bg-dark-card border border-rose-500/50 rounded-2xl shadow-2xl p-6 md:p-8">
@@ -487,6 +483,8 @@
                 this.timelineDates = { start: '', end: '' };
                 this.timelineSort = 'date-desc';
                 this.timelineCategory = 'all';
+                this.timelineSearch = '';
+                this.timelineType = 'all';
 
                 this.bulkFilterState = { search: '', category: 'all' };
                 this.bulkSelectedTxs = new Set();
@@ -495,7 +493,6 @@
             }
 
             init() {
-                // Boot Router: Decide whether to show Setup or Login
                 if (!ENCRYPTED_GH_CONFIG) {
                     document.getElementById('loginForm').classList.add('hidden');
                     document.getElementById('setupForm').classList.remove('hidden');
@@ -514,7 +511,6 @@
                 document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
             }
 
-            /* --- GITHUB SETUP & ENCRYPTION --- */
             generateEncryptedConfig(e) {
                 e.preventDefault();
                 const pwd = document.getElementById('setupPwd').value;
@@ -522,8 +518,6 @@
                 const repo = document.getElementById('setupRepo').value.trim();
 
                 const configObj = { token: token, repo: repo, path: 'vault.json', sha: null };
-
-                // Encrypt the JSON object using AES and the master password
                 const encryptedString = CryptoJS.AES.encrypt(JSON.stringify(configObj), pwd).toString();
 
                 document.getElementById('setupForm').classList.add('hidden');
@@ -531,7 +525,6 @@
                 document.getElementById('setupOutputText').value = encryptedString;
             }
 
-            /* --- AUTH & FETCH --- */
             async login(e) {
                 if (e) e.preventDefault();
                 const pwdInput = document.getElementById('vaultPassword').value;
@@ -542,14 +535,12 @@
                 errorMsg.classList.add('hidden');
 
                 try {
-                    // 1. Decrypt GitHub Configuration from the hardcoded string
                     const configBytes = CryptoJS.AES.decrypt(ENCRYPTED_GH_CONFIG, pwdInput);
                     const configStr = configBytes.toString(CryptoJS.enc.Utf8);
 
                     if (!configStr) throw new Error("Incorrect Password");
                     this.gh = JSON.parse(configStr);
 
-                    // 2. Fetch Vault from GitHub
                     const url = `https://api.github.com/repos/${this.gh.repo}/contents/${this.gh.path}`;
                     const response = await fetch(url, {
                         headers: {
@@ -558,7 +549,6 @@
                         }
                     });
 
-                    // 3. Handle entirely empty/new vault
                     if (response.status === 404) {
                         this.gh.sha = null;
                         this.vaultKey = pwdInput;
@@ -571,11 +561,9 @@
                     const result = await response.json();
                     this.gh.sha = result.sha;
 
-                    // GitHub base64 contains newlines which breaks JS atob()
                     const base64Content = result.content.replace(/\n/g, '');
                     const encryptedVaultString = atob(base64Content);
 
-                    // 4. Decrypt Vault Data
                     const vaultBytes = CryptoJS.AES.decrypt(encryptedVaultString, pwdInput);
                     const decryptedVault = vaultBytes.toString(CryptoJS.enc.Utf8);
 
@@ -638,7 +626,6 @@
                 if (this.isSidebarOpen) this.toggleSidebar();
             }
 
-            /* --- GITHUB SAVE ENGINE --- */
             async save() {
                 const saveBtn = document.getElementById('saveTransactionBtn');
                 const defaultBtnText = '<i class="fas fa-check"></i> Save Transaction';
@@ -679,7 +666,7 @@
                     }
 
                     const result = await response.json();
-                    this.gh.sha = result.content.sha; // Update local SHA hash
+                    this.gh.sha = result.content.sha;
 
                     this.refreshCurrentView();
                     return true;
@@ -719,13 +706,10 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting...';
                 btn.disabled = true;
 
-                // 1. Update Vault Key & Re-save Vault to GitHub
                 this.vaultKey = newPw;
                 if (localStorage.getItem('shahi_vault_key')) localStorage.setItem('shahi_vault_key', newPw);
                 await this.save();
 
-                // 2. Generate a new encrypted GitHub Config string
-                // We zero out the sha here so if they deploy, it forces a fetch properly.
                 const freshConfig = { ...this.gh, sha: null };
                 const newEncryptedConfig = CryptoJS.AES.encrypt(JSON.stringify(freshConfig), newPw).toString();
 
@@ -733,7 +717,6 @@
                 btn.disabled = false;
                 this.closeModal('changePasswordModal');
 
-                // 3. Show Mandatory Code Update Modal
                 document.getElementById('htmlUpdateText').value = newEncryptedConfig;
                 document.getElementById('htmlUpdateModal').classList.remove('hidden');
             }
@@ -783,7 +766,6 @@
 
             refreshCurrentView() { this.setView(this.currentView, this.viewParams); }
 
-            /* --- DASHBOARD --- */
             renderDashboard(container) {
                 const allStats = this.calculateStats(this.data.transactions);
                 const years = [...new Set(this.data.transactions.map(t => new Date(t.date).getFullYear()))].sort((a, b) => b - a);
@@ -904,7 +886,6 @@
                 `;
             }
 
-            /* --- TRANSACTIONS --- */
             renderTransactions(container) {
                 if (!document.getElementById('txListBody')) {
                     container.innerHTML = `
@@ -1006,7 +987,6 @@
                 </div>`;
             }
 
-            /* --- BULK CATEGORIZE --- */
             renderBulkCategorize(container) {
                 if (!document.getElementById('bulkTxListBody')) {
                     this.bulkSelectedTxs.clear();
@@ -1155,38 +1135,50 @@
 
                 container.innerHTML = `
                     <div class="mb-6 flex flex-col md:flex-row gap-4 bg-dark-card p-4 rounded-xl border border-dark-border shadow-sm items-end">
-                        <div class="flex-1 w-full grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start Date</label>
-                                <input type="date" id="tlStart" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.start}">
+                        <div class="flex-1 w-full grid grid-cols-2 lg:grid-cols-6 gap-3">
+                            <div class="col-span-2 lg:col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Keyword</label>
+                                <input type="text" id="tlSearch" placeholder="Search..." class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" value="${this.timelineSearch}" oninput="app.timelineSearch = this.value; app.updateTimelineView()">
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End Date</label>
-                                <input type="date" id="tlEnd" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" value="${this.timelineDates.end}">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Type</label>
+                                <select id="tlType" class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" onchange="app.timelineType = this.value; app.updateTimelineView()">
+                                    <option value="all" ${this.timelineType === 'all' ? 'selected' : ''}>All Types</option>
+                                    <option value="in" ${this.timelineType === 'in' ? 'selected' : ''}>Income</option>
+                                    <option value="out" ${this.timelineType === 'out' ? 'selected' : ''}>Expense</option>
+                                </select>
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
-                                <select id="tlCategory" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" onchange="app.timelineCategory = this.value; app.updateTimelineView()">
+                                <select id="tlCategory" class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" onchange="app.timelineCategory = this.value; app.updateTimelineView()">
                                     <option value="all">All Categories</option>
                                     ${this.data.categories.map(c => `<option value="${c.id}" ${this.timelineCategory === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sort By</label>
-                                <select id="tlSort" class="input-dark w-full px-4 py-2.5 rounded-lg text-sm" onchange="app.timelineSort = this.value; app.updateTimelineView()">
-                                    <option value="date-desc" ${this.timelineSort === 'date-desc' ? 'selected' : ''}>Date (Newest First)</option>
-                                    <option value="date-asc" ${this.timelineSort === 'date-asc' ? 'selected' : ''}>Date (Oldest First)</option>
-                                    <option value="amt-desc" ${this.timelineSort === 'amt-desc' ? 'selected' : ''}>Amount (Highest)</option>
-                                    <option value="amt-asc" ${this.timelineSort === 'amt-asc' ? 'selected' : ''}>Amount (Lowest)</option>
+                                <select id="tlSort" class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" onchange="app.timelineSort = this.value; app.updateTimelineView()">
+                                    <option value="date-desc" ${this.timelineSort === 'date-desc' ? 'selected' : ''}>Date (New)</option>
+                                    <option value="date-asc" ${this.timelineSort === 'date-asc' ? 'selected' : ''}>Date (Old)</option>
+                                    <option value="amt-desc" ${this.timelineSort === 'amt-desc' ? 'selected' : ''}>Amount (High)</option>
+                                    <option value="amt-asc" ${this.timelineSort === 'amt-asc' ? 'selected' : ''}>Amount (Low)</option>
                                 </select>
                             </div>
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Start</label>
+                                <input type="date" id="tlStart" class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" value="${this.timelineDates.start}">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">End</label>
+                                <input type="date" id="tlEnd" class="input-dark w-full px-3 py-2.5 rounded-lg text-sm" value="${this.timelineDates.end}">
+                            </div>
                         </div>
-                        <div class="flex gap-2 w-full md:w-auto">
+                        <div class="flex gap-2 w-full md:w-auto pt-2 lg:pt-0">
                             <button onclick="app.generateTimeline()" class="flex-1 md:flex-none bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-brand-500/20">
-                                <i class="fas fa-sync-alt mr-2"></i> Analyze
+                                <i class="fas fa-sync-alt"></i><span class="hidden md:inline ml-2">Analyze</span>
                             </button>
-                            <button onclick="app.exportTimelinePDF()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors">
-                                <i class="fas fa-file-pdf mr-2"></i> Export PDF
+                            <button onclick="app.exportTimelinePDF()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition-colors whitespace-nowrap">
+                                <i class="fas fa-file-pdf mr-2"></i> PDF
                             </button>
                         </div>
                     </div>
@@ -1208,13 +1200,26 @@
                 const body = document.getElementById('timelineAnalysisBody');
                 if (!body) return;
 
+                // 1. Core Date Filter
                 let rangeTxs = this.data.transactions.filter(t => {
                     const tDate = t.date.split('T')[0];
                     return tDate >= this.timelineDates.start && tDate <= this.timelineDates.end;
                 });
 
+                // 2. Category Filter
                 if (this.timelineCategory !== 'all') {
                     rangeTxs = rangeTxs.filter(t => t.categories && t.categories.includes(this.timelineCategory));
+                }
+                
+                // 3. Type Filter
+                if (this.timelineType !== 'all') {
+                    rangeTxs = rangeTxs.filter(t => t.type === this.timelineType);
+                }
+                
+                // 4. Keyword Filter
+                if (this.timelineSearch) {
+                    const q = this.timelineSearch.toLowerCase();
+                    rangeTxs = rangeTxs.filter(t => (t.name || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
                 }
 
                 const sortMode = this.timelineSort || 'date-desc';
@@ -1237,37 +1242,88 @@
                 const pProd = ((s.productive.usd / grossOut) * 100).toFixed(1);
                 const pWaste = ((s.waste.usd / grossOut) * 100).toFixed(1);
 
+                // Build Stats Display based on Type filter
+                let statsHtml = '';
+                if (this.timelineType === 'in') {
+                    statsHtml = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Income</div>
+                                <div class="text-2xl font-bold text-emerald-400">$${this.fmt(s.netIn.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.netIn.usd * ir)} • रू${this.fmt(s.netIn.usd * nr)}</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-orange-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Fees Paid</div>
+                                <div class="text-2xl font-bold text-orange-400">$${this.fmt(s.fees.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.fees.usd * ir)} • रू${this.fmt(s.fees.usd * nr)}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (this.timelineType === 'out') {
+                    statsHtml = `
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-indigo-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Spending</div>
+                                <div class="text-2xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Productive</div>
+                                <div class="text-2xl font-bold text-emerald-400">$${this.fmt(s.productive.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">${pProd}% of expenses</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-rose-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Waste / Junk</div>
+                                <div class="text-2xl font-bold text-rose-400">$${this.fmt(s.waste.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">${pWaste}% of expenses</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl flex flex-col justify-center items-center relative min-h-[120px]">
+                                <div class="w-full h-full absolute inset-0 p-2"><canvas id="timelineChart"></canvas></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statsHtml = `
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500 col-span-2 lg:col-span-1">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Income</div>
+                                <div class="text-2xl font-bold text-emerald-400">$${this.fmt(s.netIn.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.netIn.usd * ir)} • रू${this.fmt(s.netIn.usd * nr)}</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-indigo-500 col-span-2 lg:col-span-1">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Spending</div>
+                                <div class="text-2xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
+                                <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-400">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Productive</div>
+                                <div class="text-xl md:text-2xl font-bold text-emerald-400">$${this.fmt(s.productive.usd)}</div>
+                                <div class="text-[10px] md:text-xs text-gray-500 font-mono mt-1">${pProd}% of exp</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-rose-500">
+                                <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Waste</div>
+                                <div class="text-xl md:text-2xl font-bold text-rose-400">$${this.fmt(s.waste.usd)}</div>
+                                <div class="text-[10px] md:text-xs text-gray-500 font-mono mt-1">${pWaste}% of exp</div>
+                            </div>
+                            <div class="bg-dark-card border border-dark-border p-5 rounded-xl flex flex-col justify-center items-center relative min-h-[120px] col-span-2 lg:col-span-1">
+                                <div class="w-full h-full absolute inset-0 p-2"><canvas id="timelineChart"></canvas></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 body.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-indigo-500">
-                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Total Spending</div>
-                            <div class="text-2xl font-bold text-indigo-400">$${this.fmt(s.expense.usd)}</div>
-                            <div class="text-xs text-gray-500 font-mono mt-1">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</div>
-                        </div>
-                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-emerald-500">
-                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Productive</div>
-                            <div class="text-2xl font-bold text-emerald-400">$${this.fmt(s.productive.usd)}</div>
-                            <div class="text-xs text-gray-500 font-mono mt-1">${pProd}% of expenses</div>
-                        </div>
-                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl border-l-4 border-l-rose-500">
-                            <div class="text-gray-400 text-xs font-semibold uppercase mb-1">Waste / Junk</div>
-                            <div class="text-2xl font-bold text-rose-400">$${this.fmt(s.waste.usd)}</div>
-                            <div class="text-xs text-gray-500 font-mono mt-1">${pWaste}% of expenses</div>
-                        </div>
-                        <div class="bg-dark-card border border-dark-border p-5 rounded-xl flex flex-col justify-center items-center relative min-h-[120px]">
-                            <div class="w-full h-full absolute inset-0 p-2"><canvas id="timelineChart"></canvas></div>
-                        </div>
-                    </div>
+                    ${statsHtml}
                     <div class="mt-6">
                         <h3 class="text-lg font-bold text-white mb-4">Transaction Ledger</h3>
                         <div class="space-y-2">
-                            ${rangeTxs.length === 0 ? '<div class="text-gray-500 italic p-4 text-center border border-dark-border border-dashed rounded-xl">No transactions found in this date range.</div>' : ''}
+                            ${rangeTxs.length === 0 ? '<div class="text-gray-500 italic p-4 text-center border border-dark-border border-dashed rounded-xl">No transactions found matching your filters.</div>' : ''}
                             ${rangeTxs.map(t => this.transactionRow(t, true)).join('')}
                         </div>
                     </div>
                 `;
 
-                if (rangeTxs.length > 0) {
+                if (rangeTxs.length > 0 && this.timelineType !== 'in') {
                     setTimeout(() => {
                         const ctx = document.getElementById('timelineChart');
                         if (!ctx) return;
@@ -1307,6 +1363,15 @@
                 if (this.timelineCategory !== 'all') {
                     rangeTxs = rangeTxs.filter(t => t.categories && t.categories.includes(this.timelineCategory));
                 }
+                
+                if (this.timelineType !== 'all') {
+                    rangeTxs = rangeTxs.filter(t => t.type === this.timelineType);
+                }
+                
+                if (this.timelineSearch) {
+                    const q = this.timelineSearch.toLowerCase();
+                    rangeTxs = rangeTxs.filter(t => (t.name || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
+                }
 
                 let activeTxs = rangeTxs.filter(t => !this.analysisExcludedTxs.has(t.id));
 
@@ -1334,26 +1399,33 @@
                                 <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Official Timeline Statement</p>
                             </div>
                             <div style="text-align: right;">
-                                <p style="margin: 0; color: #0f172a; font-weight: bold; font-size: 14px;">Period</p>
-                                <p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">${this.timelineDates.start} to ${this.timelineDates.end}</p>
+                                <p style="margin: 0; color: #0f172a; font-weight: bold; font-size: 14px;">Period: ${this.timelineDates.start} to ${this.timelineDates.end}</p>
                                 ${this.timelineCategory !== 'all' ? `<p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">Category: ${(this.data.categories.find(c => c.id === this.timelineCategory) || {}).name || ''}</p>` : ''}
+                                ${this.timelineType !== 'all' ? `<p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">Type: ${this.timelineType === 'in' ? 'Income' : 'Expense'}</p>` : ''}
+                                ${this.timelineSearch ? `<p style="margin: 2px 0 0 0; color: #64748b; font-size: 14px;">Keyword: "${this.timelineSearch}"</p>` : ''}
                             </div>
                         </div>
                         
                         <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+                            ${(this.timelineType === 'in' || this.timelineType === 'all') ? `
+                            <div style="flex: 1; padding: 20px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                                <p style="margin: 0 0 5px 0; font-size: 12px; color: #166534; text-transform: uppercase; font-weight: bold;">Total Income</p>
+                                <p style="margin: 0; font-size: 24px; color: #15803d; font-weight: bold;">$${this.fmt(s.netIn.usd)}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 11px; color: #15803d; font-family: monospace;">₹${this.fmt(s.netIn.usd * ir)} • रू${this.fmt(s.netIn.usd * nr)}</p>
+                            </div>` : ''}
+
+                            ${(this.timelineType === 'out' || this.timelineType === 'all') ? `
                             <div style="flex: 1; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                 <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Spending</p>
                                 <p style="margin: 0; font-size: 24px; color: #0f172a; font-weight: bold;">$${this.fmt(s.expense.usd)}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; font-family: monospace;">₹${this.fmt(s.expense.usd * ir)} • रू${this.fmt(s.expense.usd * nr)}</p>
-                            </div>
-                            <div style="flex: 1; padding: 20px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
-                                <p style="margin: 0 0 5px 0; font-size: 12px; color: #166534; text-transform: uppercase; font-weight: bold;">Productive</p>
-                                <p style="margin: 0; font-size: 24px; color: #15803d; font-weight: bold;">$${this.fmt(s.productive.usd)}</p>
-                            </div>
+                            </div>` : ''}
+
+                            ${(this.timelineType === 'out' || this.timelineType === 'all') ? `
                             <div style="flex: 1; padding: 20px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
                                 <p style="margin: 0 0 5px 0; font-size: 12px; color: #991b1b; text-transform: uppercase; font-weight: bold;">Waste / Junk</p>
                                 <p style="margin: 0; font-size: 24px; color: #b91c1c; font-weight: bold;">$${this.fmt(s.waste.usd)}</p>
-                            </div>
+                            </div>` : ''}
                         </div>
 
                         <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Transaction Ledger</h3>
